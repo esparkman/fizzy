@@ -22,7 +22,7 @@ class DevicesControllerTest < ActionDispatch::IntegrationTest
     untenanted { get saas.devices_path }
 
     assert_response :success
-    assert_select "p", /No devices registered/
+    assert_select "h1", /No devices registered/
   end
 
   test "show notification settings with registered devices" do
