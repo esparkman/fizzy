@@ -1,6 +1,10 @@
 <li id="<%= dom_id(roadmap_card.card, :roadmap) %>" class="roadmap__card list-style-none margin-none flex align-center flex-wrap gap full-width">
   <%= link_to "##{roadmap_card.number} #{roadmap_card.title}", card_path(roadmap_card.card), class: "txt-ink txt-medium overflow-ellipsis" %>
 
+  <% if roadmap_card.type == :epic %>
+    <span class="btn btn--plain txt-x-small txt-uppercase flex-item-no-shrink">Epic</span>
+  <% end %>
+
   <% if roadmap_card.domains.any? %>
     <div class="flex gap-half">
       <% roadmap_card.domains.each do |domain| %>

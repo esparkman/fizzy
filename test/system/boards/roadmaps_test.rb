@@ -31,11 +31,13 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
       assert_text "Ship the new nav"
       assert_selector ".roadmap__card .btn", text: /design/i
       assert_selector ".roadmap__card", text: /shipped/i
+      assert_selector ".roadmap__card", text: /\bepic\b/i
       assert_text "2/3"
     end
 
     within "#roadmap_phase_p2" do
       assert_text "Polish the empty states"
+      assert_no_selector ".roadmap__card", text: /\bepic\b/i
     end
 
     within "#roadmap_phase_unphased" do
