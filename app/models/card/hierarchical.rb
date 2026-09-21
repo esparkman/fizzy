@@ -22,6 +22,14 @@ module Card::Hierarchical
     (children.loaded? ? children.any? : children.exists?) || epic_tagged?
   end
 
+  def candidate_parents
+    board.cards.published.top_level.where.not(id: id).order(:title)
+  end
+
+  def parentable?
+    children.none?
+  end
+
   private
     def parent_cannot_be_self
       if parent_id == id

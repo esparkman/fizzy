@@ -90,6 +90,7 @@ Rails.application.routes.draw do
       resource :goldness
       resource :image
       resource :not_now
+      resource :parent, only: %i[ update destroy ]
       resource :pin
       resource :publish
       resource :reading
