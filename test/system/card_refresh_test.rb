@@ -45,7 +45,7 @@ class CardRefreshTest < ApplicationSystemTestCase
     update_card_elsewhere
     assert_text "changed the title", wait: 5
 
-    send_keys :escape
+    cancel_edit
 
     assert_selector "h1", text: "Retitled elsewhere"
     assert_text "Description updated elsewhere"
@@ -56,7 +56,7 @@ class CardRefreshTest < ApplicationSystemTestCase
     click_on @card.title
     within_edit_frame { assert_selector "form" }
 
-    send_keys :escape
+    cancel_edit
     assert_selector "a.card__title-link", text: @card.title
 
     update_card_elsewhere
@@ -80,5 +80,12 @@ class CardRefreshTest < ApplicationSystemTestCase
 
     def within_edit_frame(&block)
       within "##{dom_id(@card, :edit)}", &block
+    end
+
+    # Escape swaps the edit form for the read view via a frame request; wait for
+    # the form to be gone so assertions see the settled state, not the re-render.
+    def cancel_edit
+      send_keys :escape
+      within_edit_frame { assert_no_selector "form", wait: 5 }
     end
 end
