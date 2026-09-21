@@ -72,12 +72,12 @@ class CardTest < ActiveSupport::TestCase
   end
 
   test "open" do
-    assert_equal cards(:logo, :layout, :text, :buy_domain).to_set, accounts("37s").cards.open.to_set
+    assert_equal cards(:logo, :layout, :text, :buy_domain, :redesign_epic, :redesign_header, :private_board_card).to_set, accounts("37s").cards.open.to_set
     assert_equal cards(:radio, :paycheck, :unfinished_thoughts).to_set, accounts("initech").cards.open.to_set
   end
 
   test "card_unassigned" do
-    assert_equal cards(:shipping, :text, :buy_domain).to_set, accounts("37s").cards.unassigned.to_set
+    assert_equal cards(:shipping, :text, :buy_domain, :redesign_epic, :redesign_header, :private_board_card).to_set, accounts("37s").cards.unassigned.to_set
   end
 
   test "assigned to" do
@@ -90,7 +90,7 @@ class CardTest < ActiveSupport::TestCase
 
   test "in board" do
     new_board = Board.create! name: "New Board", creator: users(:david)
-    assert_equal cards(:logo, :shipping, :layout, :text, :buy_domain).to_set, Card.where(board: boards(:writebook)).to_set
+    assert_equal cards(:logo, :shipping, :layout, :text, :buy_domain, :redesign_epic, :redesign_header).to_set, Card.where(board: boards(:writebook)).to_set
     assert_empty Card.where(board: new_board)
   end
 

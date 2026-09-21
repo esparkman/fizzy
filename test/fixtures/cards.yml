@@ -90,3 +90,39 @@ unfinished_thoughts:
   status: drafted
   last_active_at: <%= 1.week.ago %>
   account: initech_uuid
+
+redesign_epic:
+  id: <%= ActiveRecord::FixtureSet.identify("redesign_epic", :uuid) %>
+  number: 6
+  board: writebook_uuid
+  creator: david_uuid
+  column: writebook_review_uuid
+  title: Redesign the whole thing
+  created_at: <%= 1.week.ago %>
+  status: published
+  last_active_at: <%= 1.week.ago %>
+  account: 37s_uuid
+
+redesign_header:
+  id: <%= ActiveRecord::FixtureSet.identify("redesign_header", :uuid) %>
+  number: 7
+  board: writebook_uuid
+  creator: david_uuid
+  column: writebook_review_uuid
+  parent: redesign_epic_uuid
+  title: Update the header
+  created_at: <%= 1.week.ago %>
+  status: published
+  last_active_at: <%= 1.week.ago %>
+  account: 37s_uuid
+
+private_board_card:
+  id: <%= ActiveRecord::FixtureSet.identify("private_board_card", :uuid) %>
+  number: 8
+  board: private_uuid
+  creator: kevin_uuid
+  title: A card on the private board
+  created_at: <%= 1.week.ago %>
+  status: published
+  last_active_at: <%= 1.week.ago %>
+  account: 37s_uuid

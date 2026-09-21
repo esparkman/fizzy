@@ -2,7 +2,7 @@
   id: <%= ActiveRecord::FixtureSet.identify("37s", :uuid) %>
   name: 37signals
   external_account_id: <%= ActiveRecord::FixtureSet.identify("37signals") %>
-  cards_count: 5
+  cards_count: 8
 
 initech:
   id: <%= ActiveRecord::FixtureSet.identify("initech", :uuid) %>
