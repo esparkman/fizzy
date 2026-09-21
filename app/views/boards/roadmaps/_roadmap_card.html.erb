@@ -1,11 +1,12 @@
 <% if roadmap_card.children.any? %>
   <% children_id = "#{dom_id(roadmap_card.card, :roadmap)}_children" %>
+  <% story_count = pluralize(roadmap_card.children.size, "story") %>
 
   <li id="<%= dom_id(roadmap_card.card, :roadmap) %>" class="roadmap__card roadmap__card--epic list-style-none margin-none flex flex-column gap-half full-width" data-controller="roadmap-collapse">
     <div class="flex align-start gap full-width">
       <button type="button" class="btn btn--plain roadmap__disclosure" aria-expanded="true" aria-controls="<%= children_id %>" data-roadmap-collapse-target="button" data-action="click->roadmap-collapse#toggle">
         <%= icon_tag "caret-down" %>
-        <span class="for-screen-reader">Toggle <%= roadmap_card.title %>'s <%= pluralize(roadmap_card.children.size, "story") %></span>
+        <span class="for-screen-reader">Toggle <%= roadmap_card.title %>'s <%= story_count %></span>
       </button>
 
       <%= render "boards/roadmaps/roadmap_card_content", roadmap_card: roadmap_card %>
@@ -14,6 +15,7 @@
     <div class="roadmap__epic-progress flex align-center gap-half">
       <%= render "meter", rollup: roadmap_card.child_rollup %>
       <span class="roadmap__phase-done txt-small txt-subtle flex-item-no-shrink"><%= roadmap_card.child_rollup.shipped %>/<%= roadmap_card.child_rollup.total %> shipped</span>
+      <span class="txt-small txt-subtle txt-nowrap flex-item-no-shrink"><%= story_count %></span>
     </div>
 
     <ul id="<%= children_id %>" data-roadmap-collapse-target="body" class="roadmap__cards roadmap__cards--nested flex flex-column gap-half margin-none unpad">

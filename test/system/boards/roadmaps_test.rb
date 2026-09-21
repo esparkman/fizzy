@@ -264,6 +264,10 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
       card.toggle_tag_with "domain:marketing"
       card.steps.create!(content: "Design", completed: true)
       card.steps.create!(content: "Build", completed: false)
+
+      epic = board.cards.create!(title: "Ship the redesign", creator: users(:david), status: "published")
+      epic.toggle_tag_with "phase:p1"
+      board.cards.create!(title: "A child story", creator: users(:david), status: "published", parent: epic)
     end
 
     with_window_size(375, 700) do
@@ -274,6 +278,24 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
 
       assert page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth"),
         "expected the roadmap to fit within the phone viewport without horizontal overflow"
+
+      # The epic row's disclosure button is pulled out of flow (see
+      # .roadmap__card--epic .roadmap__disclosure in roadmap.css) so its
+      # marker lines up with a non-epic row's -- confirm that holds at the
+      # narrowest supported width, where the button has the least room to
+      # spill into the panel's own padding without clipping past the edge.
+      #
+      # Compare against a TOP-LEVEL non-epic row specifically: epics render
+      # before stories in a phase, so an unscoped ".roadmap__card:not(...)"
+      # query would match the epic's own indented nested child first (it
+      # appears earlier in the DOM than the top-level "Rebuild..." row),
+      # which is offset by the nested-list indent rather than the disclosure
+      # button -- that's a different (larger) delta and proves nothing about
+      # this fix.
+      epic_marker_x = page.evaluate_script("document.querySelector('.roadmap__card--epic .roadmap__marker').getBoundingClientRect().x")
+      plain_marker_x = page.evaluate_script("document.querySelector('.roadmap__cards:not(.roadmap__cards--nested) > .roadmap__card:not(.roadmap__card--epic) .roadmap__marker').getBoundingClientRect().x")
+      assert_in_delta plain_marker_x, epic_marker_x, 2,
+        "expected the epic row's marker to line up with a top-level non-epic row's marker"
 
       within ".roadmap__card", text: "Rebuild the notification preferences" do
         assert_selector ".roadmap__marker .for-screen-reader", text: "Planned", visible: :all
@@ -352,6 +374,7 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
       assert_text "Ship the redesign"
       assert_selector ".roadmap__epic-progress .roadmap__meter-segment--shipped"
       assert_text "1/2 shipped"
+      assert_text "2 stories"
 
       within "##{dom_id(epic, :roadmap)}_children" do
         assert_text "Design the new nav"
@@ -366,6 +389,11 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
       assert_equal "false", find(".roadmap__disclosure")["aria-expanded"]
       assert_no_selector "##{dom_id(epic, :roadmap)}_children", visible: :visible
       assert_no_selector ".roadmap__card", text: "Design the new nav"
+
+      # The child count lives in .roadmap__epic-progress, outside the
+      # collapsible children <ul>, so it stays visible once collapsed --
+      # a collapsed epic still needs to signal it's hiding stories.
+      assert_text "2 stories"
 
       find(".roadmap__disclosure").click
 
