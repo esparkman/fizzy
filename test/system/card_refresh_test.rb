@@ -82,10 +82,11 @@ class CardRefreshTest < ApplicationSystemTestCase
       within "##{dom_id(@card, :edit)}", &block
     end
 
-    # Escape swaps the edit form for the read view via a frame request; wait for
-    # the form to be gone so assertions see the settled state, not the re-render.
+    # Escape swaps the edit form for the read view via a frame request. Match a
+    # flat selector, not within_edit_frame: the frame element is replaced, so a
+    # cached `within` scope goes stale mid-wait.
     def cancel_edit
       send_keys :escape
-      within_edit_frame { assert_no_selector "form", wait: 5 }
+      assert_no_selector "##{dom_id(@card, :edit)} form", wait: 5
     end
 end
