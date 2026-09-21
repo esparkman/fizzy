@@ -96,6 +96,7 @@ class Board::Roadmap
 
   PHASE_NAMESPACE_PATTERN = /\Aphase:(.+)\z/
   PHASE_BARE_PATTERN = /\Ap(\d+)\z/
+  PHASE_HYPHEN_PATTERN = /\Aphase-(\d+)\z/
   DOMAIN_NAMESPACE_PATTERN = /\Adomain:(.+)\z/
   UNPHASED_LABEL = "unphased"
 
@@ -227,6 +228,8 @@ class Board::Roadmap
         match[1]
       elsif title.match?(PHASE_BARE_PATTERN)
         title
+      elsif (match = title.match(PHASE_HYPHEN_PATTERN))
+        "p#{match[1]}"
       end
     end
 
