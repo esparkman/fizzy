@@ -33,7 +33,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     get cards_path(format: :json), params: { indexed_by: "maybe" }
     assert_response :success
 
-    assert_equal [ cards(:buy_domain).number ], @response.parsed_body.pluck("number")
+    assert_equal [ cards(:buy_domain).number, cards(:private_board_card).number ].sort, @response.parsed_body.pluck("number").sort
   end
 
   test "create a new draft" do
