@@ -37,6 +37,14 @@ class Card::HierarchicalTest < ActiveSupport::TestCase
     assert_includes card.errors[:parent], "must be on the same board"
   end
 
+  test "creating a card with a cross-board parent raises instead of silently dropping the parent" do
+    epic = cards(:redesign_epic)
+
+    assert_raises ActiveRecord::RecordInvalid do
+      boards(:private).cards.create!(title: "New card", creator: users(:david), status: "published", parent: epic)
+    end
+  end
+
   test "a parent must be on the same account" do
     card = cards(:radio)
     card.parent = cards(:redesign_epic)

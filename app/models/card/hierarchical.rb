@@ -7,6 +7,9 @@ module Card::Hierarchical
 
     scope :top_level, -> { where(parent_id: nil) }
 
+    before_validation :detach_from_parent_on_another_board,
+      if: -> { persisted? && will_save_change_to_board_id? }
+
     validate :parent_cannot_be_self, if: :parent_id?
     validate :parent_cannot_have_a_parent, if: :parent_id?
     validate :cannot_have_children_when_assigned_a_parent, if: :parent_id?
@@ -31,6 +34,10 @@ module Card::Hierarchical
   end
 
   private
+    def detach_from_parent_on_another_board
+      self.parent = nil if parent_on_another_board?
+    end
+
     def parent_cannot_be_self
       if parent_id == id
         errors.add(:parent, "can't be the card itself")
@@ -50,7 +57,7 @@ module Card::Hierarchical
     end
 
     def parent_must_be_on_the_same_board
-      if parent && parent.board_id != board_id
+      if parent_on_another_board?
         errors.add(:parent, "must be on the same board")
       end
     end
@@ -59,5 +66,9 @@ module Card::Hierarchical
       if parent && parent.account_id != account_id
         errors.add(:parent, "must be on the same account")
       end
+    end
+
+    def parent_on_another_board?
+      parent && parent.board_id != board_id
     end
 end

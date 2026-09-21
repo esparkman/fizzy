@@ -81,6 +81,7 @@ class Card < ApplicationRecord
         update! column: nil
         track_board_change_event(old_board.name)
         grant_access_to_assignees unless board.all_access?
+        move_children_along
       end
 
       remove_inaccessible_notifications_later
@@ -89,6 +90,10 @@ class Card < ApplicationRecord
 
     def track_board_change_event(old_board_name)
       track_event "board_changed", particulars: { old_board: old_board_name, new_board: board.name }
+    end
+
+    def move_children_along
+      children.find_each { |child| child.move_to(board) }
     end
 
     def assign_number
