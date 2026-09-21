@@ -1,0 +1,48 @@
+<%= turbo_frame_tag card, :parent do %>
+  <div class="card__parent flex align-center flex-wrap gap-half txt-small">
+    <span class="txt-subtle">
+      Parent epic: <strong><%= card.parent&.title || "None" %></strong>
+    </span>
+
+    <% unless card.parentable? %>
+      <span class="txt-subtle">
+        This card has nested stories, so it can't have a parent epic of its own.
+      </span>
+    <% else %>
+      <% candidates = card.candidate_parents.to_a %>
+
+      <%= form_with url: card_parent_path(card), method: :patch, data: { controller: "form" }, class: "flex align-center gap-half" do |form| %>
+        <%= form.label :parent_id, "Change parent epic", class: "for-screen-reader" %>
+
+        <% if candidates.any? %>
+          <% # A disabled placeholder is the initial selection when there's no parent yet, so a
+             # board with a single candidate still requires an explicit choice to fire "change" --
+             # without it, the browser would pre-select that lone option and an auto-submitting
+             # select would never see a change event to submit on. %>
+          <%= form.select :parent_id,
+                safe_join([
+                  (content_tag(:option, "Choose an epic…", value: "", disabled: true, selected: true) if card.parent.blank?),
+                  options_for_select(candidates.map { |candidate| [ candidate.title, candidate.id ] }, card.parent_id)
+                ].compact),
+                {},
+                class: "input input--select",
+                aria: { invalid: card.errors[:parent].any?, describedby: (dom_id(card, :parent_error) if card.errors[:parent].any?) },
+                data: { action: "change->form#submit" } %>
+        <% else %>
+          <span class="txt-subtle">No other top-level cards on this board yet</span>
+        <% end %>
+      <% end %>
+
+      <% if card.parent %>
+        <%= button_to "Clear parent epic", card_parent_path(card), method: :delete,
+              class: "btn btn--plain txt-small", form_class: "flex" %>
+      <% end %>
+    <% end %>
+
+    <% if card.errors[:parent].any? %>
+      <p id="<%= dom_id(card, :parent_error) %>" class="txt-negative full-width margin-none" role="alert">
+        <%= card.errors[:parent].to_sentence %>
+      </p>
+    <% end %>
+  </div>
+<% end %>

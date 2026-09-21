@@ -81,4 +81,27 @@ class Card::HierarchicalTest < ActiveSupport::TestCase
     assert cards(:redesign_header).child?
     assert_not cards(:redesign_epic).child?
   end
+
+  test "candidate_parents offers published top-level cards on the same board" do
+    card = cards(:logo)
+
+    assert_includes card.candidate_parents, cards(:shipping)
+  end
+
+  test "candidate_parents excludes drafted top-level cards" do
+    board = boards(:writebook)
+    drafted_card = board.cards.create!(title: "Not ready yet", creator: users(:david), status: "drafted")
+
+    assert_not_includes cards(:logo).candidate_parents, drafted_card
+  end
+
+  test "candidate_parents excludes the card itself" do
+    assert_not_includes cards(:shipping).candidate_parents, cards(:shipping)
+  end
+
+  test "candidate_parents includes a top-level card that already has children" do
+    other_top_level = boards(:redesign_board).cards.create!(title: "Another story", creator: users(:david), status: "published")
+
+    assert_includes other_top_level.candidate_parents, cards(:redesign_epic)
+  end
 end
