@@ -1,0 +1,53 @@
+<% summary = roadmap.summary %>
+
+<div class="flex justify-end margin-block-end">
+  <div class="btn__group roadmap__view-switch flex flex-wrap" role="group" aria-label="Roadmap view">
+    <%= button_to "List", my_roadmap_view_path, method: :patch,
+          params: { roadmap_view: "list", board_id: @board.id },
+          class: "btn", aria: { pressed: @view == "list" } %>
+
+    <%= button_to "Lanes", my_roadmap_view_path, method: :patch,
+          params: { roadmap_view: "lanes", board_id: @board.id },
+          class: "btn", aria: { pressed: @view == "lanes" } %>
+  </div>
+</div>
+
+<div class="roadmap__hero flex flex-wrap gap-double margin-block-end-double">
+  <div class="roadmap__ring">
+    <%= roadmap_progress_ring(summary.completion_percent) %>
+    <div class="roadmap__ring-label">
+      <strong class="txt-large"><%= summary.completion_percent %>%</strong>
+      <span class="txt-small txt-uppercase txt-subtle">done</span>
+    </div>
+  </div>
+
+  <div class="roadmap__hero-stat flex flex-column gap-none">
+    <div class="txt-x-large">
+      <%= summary.shipped %><span class="txt-large txt-subtle"> / <%= summary.total_cards %> shipped</span>
+    </div>
+    <span class="txt-small txt-subtle txt-uppercase">Delivery momentum</span>
+  </div>
+
+  <ul class="roadmap__tiles flex flex-wrap gap margin-none unpad list-style-none">
+    <li class="roadmap__tile gap-half">
+      <span class="roadmap__tile-dot roadmap__status--in-flight" aria-hidden="true"></span>
+      <strong><%= summary.in_flight %></strong> In flight
+    </li>
+    <li class="roadmap__tile gap-half">
+      <span class="roadmap__tile-dot roadmap__status--stalled" aria-hidden="true"></span>
+      <strong><%= summary.stalled %></strong> Stalled
+    </li>
+    <li class="roadmap__tile gap-half">
+      <span class="roadmap__tile-dot roadmap__status--deferred" aria-hidden="true"></span>
+      <strong><%= summary.deferred %></strong> Not now
+    </li>
+    <li class="roadmap__tile gap-half">
+      <span class="roadmap__tile-dot roadmap__status--planned" aria-hidden="true"></span>
+      <strong><%= summary.planned %></strong> Planned
+    </li>
+    <li class="roadmap__tile gap-half">
+      <span class="roadmap__tile-dot roadmap__status--shipped" aria-hidden="true"></span>
+      <strong><%= summary.epics_shipped %>/<%= summary.total_epics %></strong> Epics shipped
+    </li>
+  </ul>
+</div>

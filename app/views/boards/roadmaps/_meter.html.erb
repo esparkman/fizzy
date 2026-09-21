@@ -1,0 +1,13 @@
+<%
+  meter_segments = phase_group.meter_segments
+  rollup_breakdown = meter_segments.map { |segment| "#{segment[:count]} #{roadmap_status_label(segment[:status]).downcase}" }.join(", ")
+%>
+
+<% if meter_segments.any? %>
+  <div class="roadmap__meter margin-block-start-half margin-block-end-half" aria-hidden="true">
+    <% meter_segments.each do |segment| %>
+      <span class="roadmap__meter-segment roadmap__meter-segment--<%= roadmap_status_modifier(segment[:status]) %> <%= "roadmap__meter-segment--last" if segment == meter_segments.last %>" style="--w: <%= segment[:percent] %>%"></span>
+    <% end %>
+  </div>
+  <p class="for-screen-reader"><%= rollup_breakdown %></p>
+<% end %>
