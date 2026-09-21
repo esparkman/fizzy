@@ -191,6 +191,92 @@ class CardTest < ActiveSupport::TestCase
     assert card_events_on_new_board.find_by(action: "card_board_changed")
   end
 
+  test "moving an epic carries its children along to the new board" do
+    epic = cards(:redesign_epic)
+    first_child = cards(:redesign_header)
+    second_child = epic.board.cards.create!(title: "Update the footer", creator: users(:david), status: "published", parent: epic)
+    new_board = boards(:private)
+
+    epic.move_to(new_board)
+
+    assert_equal new_board, epic.reload.board
+    assert_equal new_board, first_child.reload.board
+    assert_equal new_board, second_child.reload.board
+
+    assert_equal epic, first_child.parent
+    assert_equal epic, second_child.parent
+
+    assert epic.valid?
+    assert first_child.valid?
+    assert second_child.valid?
+
+    assert_equal [ first_child.number, second_child.number ].uniq.size, 2
+    assert_not_equal epic.number, first_child.number
+    assert_not_equal epic.number, second_child.number
+  end
+
+  test "moving a lone child to another board promotes it to top-level" do
+    epic = cards(:redesign_epic)
+    child = cards(:redesign_header)
+    new_board = boards(:private)
+
+    child.move_to(new_board)
+
+    assert_equal new_board, child.reload.board
+    assert_nil child.parent_id
+    assert child.valid?
+
+    assert_equal boards(:redesign_board), epic.reload.board
+    assert_empty epic.children.reload
+  end
+
+  test "moving a lone child leaves its former parent and other siblings untouched" do
+    epic = cards(:redesign_epic)
+    moved_child = cards(:redesign_header)
+    staying_child = epic.board.cards.create!(title: "Update the footer", creator: users(:david), status: "published", parent: epic)
+    new_board = boards(:private)
+
+    moved_child.move_to(new_board)
+
+    assert_equal boards(:redesign_board), epic.reload.board
+    assert_equal boards(:redesign_board), staying_child.reload.board
+    assert_equal epic, staying_child.parent
+  end
+
+  test "moving a childless top-level card is unaffected by the hierarchy carry-along" do
+    card = cards(:logo)
+    new_board = boards(:private)
+
+    assert_not card.child?
+    assert_not card.epic?
+
+    card.move_to(new_board)
+
+    assert_equal new_board, card.reload.board
+    assert_nil card.parent_id
+  end
+
+  test "moving an epic rolls back entirely if carrying a child fails" do
+    epic = cards(:redesign_epic)
+    first_child = cards(:redesign_header)
+    second_child = epic.board.cards.create!(title: "Update the footer", creator: users(:david), status: "published", parent: epic)
+    old_board = epic.board
+    new_board = boards(:private)
+
+    # RuntimeError, not ActiveRecord::Rollback: nested (non-requires_new) blocks swallow Rollback without unwinding.
+    Card.any_instance.stubs(:track_board_change_event).returns(nil).then.raises(RuntimeError, "boom")
+
+    assert_no_difference -> { Card.where(board: new_board).count } do
+      assert_raises RuntimeError do
+        epic.move_to(new_board)
+      end
+    end
+
+    assert_equal old_board, epic.reload.board
+    assert_equal old_board, first_child.reload.board
+    assert_equal old_board, second_child.reload.board
+  end
+
   test "a card is filled if it has either the title or the description set" do
     assert Card.new(title: "Some title").filled?
     assert Card.new(description: "Some description").filled?
