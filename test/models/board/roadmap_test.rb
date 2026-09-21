@@ -28,6 +28,47 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_includes group.epics.map(&:card), card
   end
 
+  test "hyphenated phase-2 tag is recognized the same as its bare and namespaced forms" do
+    card = publish_card(title: "Hyphen tagged")
+    card.toggle_tag_with "phase-2"
+
+    group = phase_group("p2")
+
+    assert_equal "P2", group.title
+    assert_includes group.cards.map(&:card), card
+  end
+
+  test "phase-2, p2, and phase:p2 tags all group under the same phase" do
+    hyphen_card = publish_card(title: "Hyphen tagged")
+    hyphen_card.toggle_tag_with "phase-2"
+
+    bare_card = publish_card(title: "Bare tagged")
+    bare_card.toggle_tag_with "p2"
+
+    namespaced_card = publish_card(title: "Namespaced tagged")
+    namespaced_card.toggle_tag_with "phase:p2"
+
+    group = phase_group("p2")
+
+    assert_equal [ hyphen_card, bare_card, namespaced_card ], group.cards.map(&:card)
+    assert_nil roadmap.phase_groups.find { |g| g.label != "p2" && g.cards.map(&:card).include?(hyphen_card) }
+  end
+
+  test "hyphenated phase tags sort numerically and before Unphased" do
+    phase3_card = publish_card(title: "Phase three")
+    phase3_card.toggle_tag_with "phase-3"
+
+    phase2_card = publish_card(title: "Phase two")
+    phase2_card.toggle_tag_with "phase-2"
+
+    unphased_card = publish_card(title: "No phase tag at all")
+
+    labels = roadmap.phase_groups.map(&:label)
+
+    assert_equal %w[ p2 p3 unphased ], labels
+    assert_includes phase_group("unphased").cards.map(&:card), unphased_card
+  end
+
   test "phases are ordered numerically, non-numbered phases sort after, and Unphased always sorts last" do
     p10_card = publish_card(title: "Far future")
     p10_card.toggle_tag_with "phase:p10"
