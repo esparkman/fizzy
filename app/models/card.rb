@@ -3,6 +3,8 @@ class Card < ApplicationRecord
     Entropic, Eventable, Exportable, Golden, Hierarchical, Mentions, Multistep, Pinnable, Postponable,
     Promptable, Readable, Searchable, Stallable, Statuses, Storage::Tracked, Taggable, Triageable, Watchable
 
+  EPIC_TITLES = %w[ type:epic epic ].freeze
+
   belongs_to :account, default: -> { board.account }
   belongs_to :board
   belongs_to :creator, class_name: "User", default: -> { Current.user }

@@ -52,8 +52,4 @@ module Card::Hierarchical
         errors.add(:parent, "must be on the same account")
       end
     end
-
-    def epic_tagged?
-      tags.any? { |tag| tag.title.in?(Board::Roadmap::EPIC_TITLES) }
-    end
 end

@@ -23,4 +23,8 @@ module Card::Taggable
   def tagged_with?(tag)
     tags.include? tag
   end
+
+  def epic_tagged?
+    tags.any? { |tag| tag.title.in?(Card::EPIC_TITLES) }
+  end
 end

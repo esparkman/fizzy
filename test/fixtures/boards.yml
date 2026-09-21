@@ -12,6 +12,13 @@ private:
   all_access: false
   account: 37s_uuid
 
+redesign_board:
+  id: <%= ActiveRecord::FixtureSet.identify("redesign_board", :uuid) %>
+  name: Redesign board
+  creator: david_uuid
+  all_access: false
+  account: 37s_uuid
+
 miltons_wish_list:
   id: <%= ActiveRecord::FixtureSet.identify("miltons_wish_list", :uuid) %>
   name: Milton's Wish List

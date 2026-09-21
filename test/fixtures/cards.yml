@@ -94,9 +94,8 @@ unfinished_thoughts:
 redesign_epic:
   id: <%= ActiveRecord::FixtureSet.identify("redesign_epic", :uuid) %>
   number: 6
-  board: writebook_uuid
+  board: redesign_board_uuid
   creator: david_uuid
-  column: writebook_review_uuid
   title: Redesign the whole thing
   created_at: <%= 1.week.ago %>
   status: published
@@ -106,9 +105,8 @@ redesign_epic:
 redesign_header:
   id: <%= ActiveRecord::FixtureSet.identify("redesign_header", :uuid) %>
   number: 7
-  board: writebook_uuid
+  board: redesign_board_uuid
   creator: david_uuid
-  column: writebook_review_uuid
   parent: redesign_epic_uuid
   title: Update the header
   created_at: <%= 1.week.ago %>

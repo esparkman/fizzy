@@ -90,7 +90,7 @@ class CardTest < ActiveSupport::TestCase
 
   test "in board" do
     new_board = Board.create! name: "New Board", creator: users(:david)
-    assert_equal cards(:logo, :shipping, :layout, :text, :buy_domain, :redesign_epic, :redesign_header).to_set, Card.where(board: boards(:writebook)).to_set
+    assert_equal cards(:logo, :shipping, :layout, :text, :buy_domain).to_set, Card.where(board: boards(:writebook)).to_set
     assert_empty Card.where(board: new_board)
   end
 
