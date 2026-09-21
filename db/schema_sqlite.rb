@@ -568,7 +568,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_09_21_120000) do
     t.uuid "account_id", null: false
     t.integer "bundle_email_frequency", default: 0, null: false
     t.datetime "created_at", null: false
-    t.string "roadmap_view", default: "list", null: false
+    t.string "roadmap_view", limit: 255, default: "list", null: false
     t.string "timezone_name", limit: 255
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
