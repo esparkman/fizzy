@@ -1,5 +1,5 @@
-<%= link_to card_path(roadmap_card.card), id: dom_id(roadmap_card.card, :roadmap), class: "roadmap__chip flex flex-column gap-half #{"translucent" if roadmap_card.dimmed?}" do %>
-  <span class="roadmap__chip-title overflow-line-clamp txt-small txt-ink"><%= "##{roadmap_card.number} #{roadmap_card.title}" %></span>
+<%= link_to card_path(roadmap_card.card), id: dom_id(roadmap_card.card, :roadmap), class: "roadmap__chip flex flex-column gap-half" do %>
+  <span class="roadmap__chip-title overflow-line-clamp txt-small <%= roadmap_card.dimmed? ? "txt-subtle" : "txt-ink" %>"><%= "##{roadmap_card.number} #{roadmap_card.title}" %></span>
 
   <% if roadmap_card.type == :epic || roadmap_card.domains.any? %>
     <div class="flex gap-half flex-wrap">
@@ -18,7 +18,7 @@
       <span class="roadmap__step-bar" aria-hidden="true">
         <span class="roadmap__step-bar-fill" style="--w: <%= roadmap_card.steps_percent %>%"></span>
       </span>
-      <strong class="txt-x-small txt-nowrap"><%= "#{roadmap_card.steps_completed}/#{roadmap_card.steps_total}" %></strong>
+      <strong class="roadmap__tabular txt-x-small txt-nowrap"><%= "#{roadmap_card.steps_completed}/#{roadmap_card.steps_total}" %></strong>
     </span>
   <% end %>
 <% end %>

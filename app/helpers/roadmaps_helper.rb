@@ -3,14 +3,6 @@ module RoadmapsHelper
   RING_STROKE_WIDTH = 8
   RING_CIRCUMFERENCE = (2 * Math::PI * RING_RADIUS).round(2)
 
-  STATUS_CLASSES = {
-    shipped: "roadmap__status--shipped",
-    in_flight: "roadmap__status--in-flight",
-    stalled: "roadmap__status--stalled",
-    planned: "roadmap__status--planned",
-    not_now: "roadmap__status--deferred"
-  }.freeze
-
   STATUS_ICONS = {
     shipped: "check-circle",
     in_flight: "arrow-right",
@@ -29,10 +21,6 @@ module RoadmapsHelper
 
   def roadmap_status_label(status)
     status.to_s.humanize
-  end
-
-  def roadmap_status_class(status)
-    STATUS_CLASSES.fetch(status)
   end
 
   def roadmap_status_icon(status)

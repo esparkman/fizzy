@@ -15,7 +15,7 @@
 
 <% lanes_view = @view == "lanes" %>
 
-<div class="panel <%= lanes_view ? "roadmap--lanes" : "panel--wide" %> shadow center roadmap">
+<div class="panel <%= lanes_view ? "roadmap--lanes" : "roadmap--list" %> shadow center roadmap">
   <% if @roadmap.phase_groups.empty? %>
     <div class="blank-slate roadmap__blank-slate flex flex-column align-center gap-half txt-align-center">
       <%= icon_tag "board", class: "roadmap__blank-slate-icon", style: "--icon-size: 2rem" %>

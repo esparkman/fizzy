@@ -13,7 +13,7 @@ class Board::Roadmap
       (steps_completed * 100 / steps_total)
     end
 
-    def dimmed? = status.in?(%i[ shipped not_now ])
+    def dimmed? = status == :not_now
   end
 
   PhaseGroup = Data.define(:label, :title, :epics, :cards, :rollup) do

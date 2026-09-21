@@ -364,7 +364,7 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_equal [], by_status[:not_now]
   end
 
-  test "dimmed? is true for shipped and not_now cards, false for the rest" do
+  test "dimmed? is true for not_now cards only" do
     shipped = publish_card(title: "Shipped")
     shipped.close
 
@@ -378,7 +378,7 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     in_flight = publish_card(title: "In flight", column: columns(:writebook_in_progress))
     planned = publish_card(title: "Planned")
 
-    assert find_roadmap_card(shipped).dimmed?
+    assert_not find_roadmap_card(shipped).dimmed?
     assert find_roadmap_card(not_now).dimmed?
     assert_not find_roadmap_card(stalled).dimmed?
     assert_not find_roadmap_card(in_flight).dimmed?

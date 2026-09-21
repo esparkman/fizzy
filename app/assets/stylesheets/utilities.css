@@ -79,6 +79,11 @@
     row-gap: var(--row-gap, var(--block-space-half));
   }
 
+  .gap-double {
+    column-gap: var(--column-gap, var(--inline-space-double));
+    row-gap: var(--row-gap, var(--block-space-double));
+  }
+
   .gap-none {
     --column-gap: 0;
     --row-gap: 0;
