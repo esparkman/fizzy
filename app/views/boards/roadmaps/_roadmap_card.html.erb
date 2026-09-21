@@ -1,36 +1,28 @@
-<li id="<%= dom_id(roadmap_card.card, :roadmap) %>" class="roadmap__card list-style-none margin-none flex align-start gap full-width">
-  <span class="roadmap__marker roadmap__marker--<%= roadmap_status_modifier(roadmap_card.status) %>">
-    <%= icon_tag roadmap_status_icon(roadmap_card.status) %>
-    <span class="for-screen-reader"><%= roadmap_status_label(roadmap_card.status) %></span>
-  </span>
+<% if roadmap_card.children.any? %>
+  <% children_id = "#{dom_id(roadmap_card.card, :roadmap)}_children" %>
 
-  <%= link_to card_path(roadmap_card.card), class: "overflow-line-clamp min-width txt-normal font-weight-medium #{roadmap_card.dimmed? ? "txt-subtle" : "txt-ink"}" do %>
-    <span class="roadmap__card-id txt-subtle">#<%= roadmap_card.number %></span> <%= roadmap_card.title %>
-  <% end %>
+  <li id="<%= dom_id(roadmap_card.card, :roadmap) %>" class="roadmap__card roadmap__card--epic list-style-none margin-none flex flex-column gap-half full-width" data-controller="roadmap-collapse">
+    <div class="flex align-start gap full-width">
+      <button type="button" class="btn btn--plain roadmap__disclosure" aria-expanded="true" aria-controls="<%= children_id %>" data-roadmap-collapse-target="button" data-action="click->roadmap-collapse#toggle">
+        <%= icon_tag "caret-down" %>
+        <span class="for-screen-reader">Toggle <%= roadmap_card.title %>'s <%= pluralize(roadmap_card.children.size, "story") %></span>
+      </button>
 
-  <% if roadmap_card.type == :epic %>
-    <span class="roadmap__epic-badge txt-x-small txt-uppercase flex-item-no-shrink">Epic</span>
-  <% end %>
-
-  <% if roadmap_card.domains.any? %>
-    <div class="roadmap__domains roadmap__visually-hidden flex-item-no-shrink">
-      <% roadmap_card.domains.each do |domain| %>
-        <span class="btn btn--plain txt-x-small txt-uppercase txt-subtle txt-nowrap flex-item-no-shrink"><%= domain %></span>
-      <% end %>
+      <%= render "boards/roadmaps/roadmap_card_content", roadmap_card: roadmap_card %>
     </div>
-    <span class="roadmap__domains-count btn btn--plain txt-x-small txt-uppercase txt-subtle flex-item-no-shrink" aria-hidden="true">+<%= roadmap_card.domains.size %></span>
-  <% end %>
 
-  <span class="roadmap__row-spacer" aria-hidden="true"></span>
+    <div class="roadmap__epic-progress flex align-center gap-half">
+      <%= render "meter", rollup: roadmap_card.child_rollup %>
+      <span class="roadmap__phase-done txt-small txt-subtle flex-item-no-shrink"><%= roadmap_card.child_rollup.shipped %>/<%= roadmap_card.child_rollup.total %> shipped</span>
+    </div>
 
-  <% if roadmap_card.steps_total > 0 %>
-    <span class="flex align-center gap-half txt-small flex-item-no-shrink">
-      <span class="roadmap__step-bar" aria-hidden="true">
-        <span class="roadmap__step-bar-fill" style="--w: <%= roadmap_card.steps_percent %>%"></span>
-      </span>
-      <strong class="roadmap__tabular txt-x-small txt-nowrap"><%= "#{roadmap_card.steps_completed}/#{roadmap_card.steps_total}" %></strong>
-    </span>
-  <% end %>
-
-  <span class="roadmap__status-badge btn btn--plain txt-x-small txt-uppercase txt-subtle flex-item-no-shrink" aria-hidden="true"><%= roadmap_status_label(roadmap_card.status) %></span>
-</li>
+    <ul id="<%= children_id %>" data-roadmap-collapse-target="body" class="roadmap__cards roadmap__cards--nested flex flex-column gap-half margin-none unpad">
+      <%# Card parent validation caps nesting at one level, so a child never has children of its own -- this recursion never renders a third, epic-styled level. %>
+      <%= render partial: "boards/roadmaps/roadmap_card", collection: roadmap_card.children, as: :roadmap_card %>
+    </ul>
+  </li>
+<% else %>
+  <li id="<%= dom_id(roadmap_card.card, :roadmap) %>" class="roadmap__card list-style-none margin-none flex align-start gap full-width">
+    <%= render "boards/roadmaps/roadmap_card_content", roadmap_card: roadmap_card %>
+  </li>
+<% end %>

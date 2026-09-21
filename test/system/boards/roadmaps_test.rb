@@ -328,6 +328,100 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
     end
   end
 
+  test "an operator sees an epic's child stories nested beneath it and can collapse them" do
+    board = Board.create!(name: "Drilldown board", creator: users(:david), account: accounts(:"37s"))
+
+    epic = Current.set(session: sessions(:david)) do
+      epic = board.cards.create!(title: "Ship the redesign", creator: users(:david), status: "published")
+      epic.toggle_tag_with "phase:p1"
+
+      shipped_child = board.cards.create!(title: "Design the new nav", creator: users(:david), status: "published", parent: epic)
+      shipped_child.close
+
+      board.cards.create!(title: "Build the new nav", creator: users(:david), status: "published", parent: epic)
+
+      epic
+    end
+
+    sign_in_as(users(:david))
+    visit board_roadmap_url(board)
+
+    epic_row = "##{dom_id(epic, :roadmap)}"
+
+    within epic_row do
+      assert_text "Ship the redesign"
+      assert_selector ".roadmap__epic-progress .roadmap__meter-segment--shipped"
+      assert_text "1/2 shipped"
+
+      within "##{dom_id(epic, :roadmap)}_children" do
+        assert_text "Design the new nav"
+        assert_text "Build the new nav"
+      end
+
+      disclosure = find(".roadmap__disclosure")
+      assert_equal "true", disclosure["aria-expanded"]
+
+      disclosure.click
+
+      assert_equal "false", find(".roadmap__disclosure")["aria-expanded"]
+      assert_no_selector "##{dom_id(epic, :roadmap)}_children", visible: :visible
+      assert_no_selector ".roadmap__card", text: "Design the new nav"
+
+      find(".roadmap__disclosure").click
+
+      assert_equal "true", find(".roadmap__disclosure")["aria-expanded"]
+      assert_selector ".roadmap__card", text: "Design the new nav"
+    end
+  end
+
+  test "an epic with no children renders as a plain row with no disclosure" do
+    board = Board.create!(name: "Childless epic board", creator: users(:david), account: accounts(:"37s"))
+
+    card = Current.set(session: sessions(:david)) do
+      board.cards.create!(title: "Standalone story", creator: users(:david), status: "published").tap do |card|
+        card.toggle_tag_with "phase:p1"
+      end
+    end
+
+    sign_in_as(users(:david))
+    visit board_roadmap_url(board)
+
+    within "##{dom_id(card, :roadmap)}" do
+      assert_no_selector ".roadmap__disclosure"
+      assert_no_selector ".roadmap__epic-progress"
+    end
+  end
+
+  test "an operator toggling to lanes still sees a child story as its own chip, and the band count matches the chips" do
+    board = Board.create!(name: "Lanes drilldown board", creator: users(:david), account: accounts(:"37s"))
+
+    planned_child = Current.set(session: sessions(:david)) do
+      epic = board.cards.create!(title: "Ship the redesign", creator: users(:david), status: "published")
+      epic.toggle_tag_with "phase:p1"
+
+      shipped_child = board.cards.create!(title: "Design the new nav", creator: users(:david), status: "published", parent: epic)
+      shipped_child.close
+
+      board.cards.create!(title: "Build the new nav", creator: users(:david), status: "published", parent: epic)
+    end
+
+    sign_in_as(users(:david))
+    visit board_roadmap_url(board, view: "lanes")
+
+    within ".roadmap__lane", text: /planned/i do
+      assert_selector "##{dom_id(planned_child, :roadmap)}", text: "Build the new nav"
+    end
+
+    # The band's "shipped" count and meter must reflect the flattened set
+    # (epic + its 2 children -- 1 shipped of 3), the same set the lanes
+    # below render as chips, not the top-level-only count (which would be
+    # "0/1 shipped" since only the untagged epic itself is top-level).
+    within "#roadmap_band_p1" do
+      assert_text "1/3 shipped"
+      assert_selector ".roadmap__meter .roadmap__meter-segment--shipped"
+    end
+  end
+
   private
     # The Capybara browser session is reused across tests, so a resize here
     # would otherwise leak into whichever test runs next.

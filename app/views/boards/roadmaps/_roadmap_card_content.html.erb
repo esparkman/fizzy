@@ -1,0 +1,34 @@
+<span class="roadmap__marker roadmap__marker--<%= roadmap_status_modifier(roadmap_card.status) %>">
+  <%= icon_tag roadmap_status_icon(roadmap_card.status) %>
+  <span class="for-screen-reader"><%= roadmap_status_label(roadmap_card.status) %></span>
+</span>
+
+<%= link_to card_path(roadmap_card.card), class: "overflow-line-clamp min-width txt-normal font-weight-medium #{roadmap_card.dimmed? ? "txt-subtle" : "txt-ink"}" do %>
+  <span class="roadmap__card-id txt-subtle">#<%= roadmap_card.number %></span> <%= roadmap_card.title %>
+<% end %>
+
+<% if roadmap_card.type == :epic %>
+  <span class="roadmap__epic-badge txt-x-small txt-uppercase flex-item-no-shrink">Epic</span>
+<% end %>
+
+<% if roadmap_card.domains.any? %>
+  <div class="roadmap__domains roadmap__visually-hidden flex-item-no-shrink">
+    <% roadmap_card.domains.each do |domain| %>
+      <span class="btn btn--plain txt-x-small txt-uppercase txt-subtle txt-nowrap flex-item-no-shrink"><%= domain %></span>
+    <% end %>
+  </div>
+  <span class="roadmap__domains-count btn btn--plain txt-x-small txt-uppercase txt-subtle flex-item-no-shrink" aria-hidden="true">+<%= roadmap_card.domains.size %></span>
+<% end %>
+
+<span class="roadmap__row-spacer" aria-hidden="true"></span>
+
+<% if roadmap_card.shows_own_step_bar? %>
+  <span class="flex align-center gap-half txt-small flex-item-no-shrink">
+    <span class="roadmap__step-bar" aria-hidden="true">
+      <span class="roadmap__step-bar-fill" style="--w: <%= roadmap_card.steps_percent %>%"></span>
+    </span>
+    <strong class="roadmap__tabular txt-x-small txt-nowrap"><%= "#{roadmap_card.steps_completed}/#{roadmap_card.steps_total}" %></strong>
+  </span>
+<% end %>
+
+<span class="roadmap__status-badge btn btn--plain txt-x-small txt-uppercase txt-subtle flex-item-no-shrink" aria-hidden="true"><%= roadmap_status_label(roadmap_card.status) %></span>

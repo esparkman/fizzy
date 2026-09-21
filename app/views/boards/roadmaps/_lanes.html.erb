@@ -8,10 +8,10 @@
           <span class="overflow-ellipsis"><%= phase_group.title %></span>
         </h2>
 
-        <span class="roadmap__phase-done txt-small txt-subtle flex-item-no-shrink"><%= phase_group.rollup.shipped %>/<%= phase_group.rollup.total %> shipped</span>
+        <span class="roadmap__phase-done txt-small txt-subtle flex-item-no-shrink"><%= phase_group.flat_rollup.shipped %>/<%= phase_group.flat_rollup.total %> shipped</span>
       </div>
 
-      <%= render "meter", phase_group: phase_group %>
+      <%= render "meter", rollup: phase_group.flat_rollup %>
 
       <div class="roadmap__lane-row overflow-x">
         <% phase_group.cards_by_status.each do |status, status_cards| %>

@@ -14,7 +14,7 @@
     <span class="roadmap__phase-done txt-small txt-subtle flex-item-no-shrink"><%= phase_group.rollup.shipped %>/<%= phase_group.rollup.total %> shipped</span>
   </div>
 
-  <%= render "meter", phase_group: phase_group %>
+  <%= render "meter", rollup: phase_group.rollup %>
 
   <div id="<%= phase_id %>_body" data-roadmap-collapse-target="body">
     <ul class="roadmap__cards flex flex-column gap-half margin-none unpad margin-block-start-half">

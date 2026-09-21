@@ -250,6 +250,31 @@
     font-weight: 400;
   }
 
+  /* Epic drilldown
+     ------------------------------------------------------------------------
+     --roadmap-card-indent lines up the child rollup meter and the nested
+     list with the epic's own title, past its disclosure control and status
+     marker. Kept as a custom property (component layer) rather than a
+     margin/padding utility, since a utility class would need to win over
+     this same component rule at the 639px reflow below. */
+  .roadmap__card--epic {
+    --roadmap-card-indent: 2.1rem;
+  }
+
+  .roadmap__epic-progress .roadmap__meter {
+    flex: 1 1 auto;
+  }
+
+  .roadmap__epic-progress {
+    margin-inline-start: var(--roadmap-card-indent);
+  }
+
+  .roadmap__cards--nested {
+    border-inline-start: var(--border);
+    margin-inline-start: 0.65em;
+    padding-inline-start: var(--roadmap-card-indent);
+  }
+
   /* Lanes view
      ------------------------------------------------------------------------
      Five status columns need more room than the 60ch reading panel, so lanes
