@@ -5,15 +5,8 @@
     <div class="roadmap__completion flex flex-column gap-half">
       <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">Delivery progress</span>
 
-      <div class="flex align-center gap">
-        <div class="roadmap__ring">
-          <%= roadmap_progress_ring(summary.completion_percent) %>
-          <div class="roadmap__ring-label">
-            <strong class="roadmap__tabular txt-large font-weight-bold"><%= summary.completion_percent %>%</strong>
-            <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">done</span>
-          </div>
-        </div>
-
+      <div class="roadmap__stat flex gap-half">
+        <strong class="roadmap__tabular txt-x-large font-weight-bold"><%= summary.completion_percent %>%</strong>
         <span class="roadmap__tabular txt-medium txt-subtle"><%= summary.shipped %> of <%= summary.total_cards %> shipped</span>
       </div>
     </div>

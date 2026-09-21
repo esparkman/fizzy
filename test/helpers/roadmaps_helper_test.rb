@@ -32,14 +32,4 @@ class RoadmapsHelperTest < ActionView::TestCase
   test "roadmap_status_modifier raises for an unexpected status" do
     assert_raises(KeyError) { roadmap_status_modifier(:unknown) }
   end
-
-  test "roadmap_progress_ring sets stroke-dashoffset from the percent against the ring's circumference" do
-    assert_match(/stroke-dashoffset="263\.89"/, roadmap_progress_ring(0))
-    assert_match(/stroke-dashoffset="131\.95"/, roadmap_progress_ring(50))
-    assert_match(/stroke-dashoffset="0\.0"/, roadmap_progress_ring(100))
-  end
-
-  test "roadmap_progress_ring hides the SVG from screen readers" do
-    assert_match(/aria-hidden="true"/, roadmap_progress_ring(50))
-  end
 end

@@ -16,35 +16,8 @@
     row-gap: var(--block-space);
   }
 
-  .roadmap__ring {
-    block-size: 7rem;
-    flex: none;
-    inline-size: 7rem;
-    position: relative;
-  }
-
-  .roadmap__ring-svg {
-    transform: rotate(-90deg);
-  }
-
-  .roadmap__ring-track {
-    stroke: var(--color-ink-lighter);
-  }
-
-  .roadmap__ring-progress {
-    stroke: var(--color-status-shipped);
-    transition: stroke-dashoffset 0.2s ease-out;
-  }
-
-  .roadmap__ring-label {
-    display: grid;
-    gap: 0.15em;
-    inset: 0;
-    margin-inline: auto;
-    max-inline-size: 4.5rem;
-    place-items: center;
-    position: absolute;
-    text-align: center;
+  .roadmap__stat {
+    align-items: baseline;
   }
 
   .roadmap__tiles {

@@ -215,6 +215,7 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
       # The eyebrow is visually uppercased via CSS text-transform, so the
       # rendered text Capybara reads back is "DELIVERY PROGRESS".
       assert_text(/delivery progress/i)
+      assert_text "50%"
       assert_text "1 of 2 shipped"
     end
   end
