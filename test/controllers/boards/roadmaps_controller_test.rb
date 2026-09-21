@@ -30,4 +30,78 @@ class Boards::RoadmapsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "renders the list view by default" do
+    board = boards(:writebook)
+
+    get board_roadmap_path(board)
+
+    assert_response :success
+    assert_select ".roadmap__phase"
+    assert_select ".roadmap__lanes", false
+  end
+
+  test "renders the lanes view when the user's persisted preference is lanes" do
+    board = boards(:writebook)
+    users(:kevin).settings.update!(roadmap_view: "lanes")
+
+    get board_roadmap_path(board)
+
+    assert_response :success
+    assert_select ".roadmap__lanes"
+    assert_select ".roadmap__phase", false
+  end
+
+  test "a view param overrides the persisted list preference" do
+    board = boards(:writebook)
+
+    get board_roadmap_path(board, view: "lanes")
+
+    assert_response :success
+    assert_select ".roadmap__lanes"
+  end
+
+  test "a junk view param falls back to the persisted preference" do
+    board = boards(:writebook)
+
+    get board_roadmap_path(board, view: "grid")
+
+    assert_response :success
+    assert_select ".roadmap__phase"
+    assert_select ".roadmap__lanes", false
+  end
+
+  test "renders the list view when the user has no settings row" do
+    board = boards(:writebook)
+    users(:kevin).settings.destroy
+    users(:kevin).reload
+
+    get board_roadmap_path(board)
+
+    assert_response :success
+    assert_select ".roadmap__phase"
+    assert_select ".roadmap__lanes", false
+  end
+
+  test "a view param overrides a persisted lanes preference back to list" do
+    board = boards(:writebook)
+    users(:kevin).settings.update!(roadmap_view: "lanes")
+
+    get board_roadmap_path(board, view: "list")
+
+    assert_response :success
+    assert_select ".roadmap__phase"
+    assert_select ".roadmap__lanes", false
+  end
+
+  test "a junk view param falls back to a persisted lanes preference" do
+    board = boards(:writebook)
+    users(:kevin).settings.update!(roadmap_view: "lanes")
+
+    get board_roadmap_path(board, view: "grid")
+
+    assert_response :success
+    assert_select ".roadmap__lanes"
+    assert_select ".roadmap__phase", false
+  end
 end
