@@ -37,6 +37,28 @@ class User::SettingsTest < ActiveSupport::TestCase
     assert bundle.reload.pending?
   end
 
+  test "defaults roadmap_view to list" do
+    settings = User::Settings.new(account: @settings.account, user: @user)
+    assert_equal "list", settings.roadmap_view
+    assert settings.roadmap_view_list?
+  end
+
+  test "accepts list and lanes as roadmap_view" do
+    @settings.update!(roadmap_view: "lanes")
+    assert_equal "lanes", @settings.reload.roadmap_view
+    assert @settings.roadmap_view_lanes?
+
+    @settings.update!(roadmap_view: "list")
+    assert_equal "list", @settings.reload.roadmap_view
+    assert @settings.roadmap_view_list?
+  end
+
+  test "rejects unknown roadmap_view values" do
+    @settings.roadmap_view = "grid"
+    assert_not @settings.valid?
+    assert_includes @settings.errors[:roadmap_view], "is not included in the list"
+  end
+
   test "bundling_emails?" do
     @settings.update!(bundle_email_frequency: :never)
     assert_not @user.settings.bundling_emails?

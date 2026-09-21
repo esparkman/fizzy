@@ -4,6 +4,7 @@ class User::Settings < ApplicationRecord
 
   enum :bundle_email_frequency, %i[ never every_few_hours daily weekly ],
     default: :every_few_hours, prefix: :bundle_email
+  enum :roadmap_view, { list: "list", lanes: "lanes" }, default: :list, validate: true, prefix: true
 
   after_update :review_pending_bundles, if: :saved_change_to_bundle_email_frequency?
 

@@ -8,6 +8,7 @@ module User::Configurable
     after_create :create_settings, unless: :system?
 
     delegate :timezone, to: :settings, allow_nil: true
+    delegate :roadmap_view, to: :settings, allow_nil: true
   end
 
   def in_time_zone(&block)

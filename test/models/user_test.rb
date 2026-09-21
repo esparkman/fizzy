@@ -101,4 +101,11 @@ class UserTest < ActiveSupport::TestCase
     user.verify
     assert_equal original_time.to_i, user.reload.verified_at.to_i
   end
+
+  test "delegates roadmap_view to settings" do
+    user = users(:david)
+    user.settings.update!(roadmap_view: "lanes")
+
+    assert_equal "lanes", user.roadmap_view
+  end
 end
