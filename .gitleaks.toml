@@ -8,6 +8,7 @@ paths = [
   '''.*\.yml\.enc''',
   '''docs/''',
   '''test/''',
+  '''\.kamal/secrets''',
 ]
 
 [[rules]]

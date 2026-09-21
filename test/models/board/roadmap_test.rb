@@ -102,6 +102,31 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_equal 0, roadmap_card.steps_total
   end
 
+  test "steps_percent is 0 for a card with no steps, avoiding a divide error" do
+    card = publish_card(title: "No steps here")
+
+    assert_equal 0, find_roadmap_card(card).steps_percent
+  end
+
+  test "steps_percent reports completed steps as a percent of total" do
+    card = publish_card(title: "Partly done")
+    card.steps.create!(content: "one", completed: true)
+    card.steps.create!(content: "two", completed: true)
+    card.steps.create!(content: "three", completed: true)
+    card.steps.create!(content: "four", completed: false)
+    card.steps.create!(content: "five", completed: false)
+
+    assert_equal 60, find_roadmap_card(card).steps_percent
+  end
+
+  test "steps_percent is 100 when every step is completed" do
+    card = publish_card(title: "All done")
+    card.steps.create!(content: "one", completed: true)
+    card.steps.create!(content: "two", completed: true)
+
+    assert_equal 100, find_roadmap_card(card).steps_percent
+  end
+
   test "board rollups tally shipped epics, in-flight cards, and deferred cards" do
     board = Board.create!(name: "Rollups", creator: users(:david), account: accounts(:"37s"))
     column = board.columns.create!(name: "In progress")
@@ -124,6 +149,56 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_equal 1, summary.in_flight
     assert_equal 1, summary.deferred
     assert_equal 1, summary.planned
+    assert_equal 4, summary.total_cards
+    assert_equal 1, summary.shipped
+    assert_equal 0, summary.stalled
+  end
+
+  test "summary.shipped counts all shipped cards, not just shipped epics" do
+    board = Board.create!(name: "Shipped tally", creator: users(:david), account: accounts(:"37s"))
+
+    shipped_epic = board.cards.create!(title: "Shipped epic", creator: users(:david), status: "published")
+    shipped_epic.toggle_tag_with "type:epic"
+    shipped_epic.close
+
+    shipped_story = board.cards.create!(title: "Shipped story", creator: users(:david), status: "published")
+    shipped_story.close
+
+    summary = Board::Roadmap.new(board).summary
+
+    assert_equal 1, summary.epics_shipped
+    assert_equal 2, summary.shipped
+    assert_operator summary.shipped, :>, summary.epics_shipped
+  end
+
+  test "summary.completion_percent truncates rather than rounds" do
+    board = Board.create!(name: "Completion percent", creator: users(:david), account: accounts(:"37s"))
+
+    shipped_card = board.cards.create!(title: "Shipped", creator: users(:david), status: "published")
+    shipped_card.close
+
+    board.cards.create!(title: "Planned one", creator: users(:david), status: "published")
+    board.cards.create!(title: "Planned two", creator: users(:david), status: "published")
+
+    summary = Board::Roadmap.new(board).summary
+
+    assert_equal 3, summary.total_cards
+    assert_equal 1, summary.shipped
+    assert_equal 33, summary.completion_percent
+  end
+
+  test "summary.stalled counts stalled cards" do
+    board = Board.create!(name: "Stalled tally", creator: users(:david), account: accounts(:"37s"))
+    column = board.columns.create!(name: "In progress")
+
+    stalled_card = board.cards.create!(title: "Gone quiet", creator: users(:david), status: "published", column: column)
+    stalled_card.create_activity_spike!
+
+    travel_to 3.months.from_now
+
+    summary = Board::Roadmap.new(board).summary
+
+    assert_equal 1, summary.stalled
   end
 
   test "a card tagged with several phases is grouped under the lowest one, deterministically" do
@@ -237,6 +312,79 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_equal 4, group.rollup.total
   end
 
+  test "meter_segments skips zero-count statuses and orders the rest by STATUS_ORDER, percents summing to 100" do
+    shipped = publish_card(title: "Shipped in phase")
+    shipped.toggle_tag_with "phase:p4"
+    shipped.close
+
+    stalled = publish_card(title: "Stalled in phase", column: columns(:writebook_in_progress))
+    stalled.toggle_tag_with "phase:p4"
+    stalled.create_activity_spike!
+
+    travel_to 3.months.from_now
+
+    in_flight = publish_card(title: "In flight in phase", column: columns(:writebook_in_progress))
+    in_flight.toggle_tag_with "phase:p4"
+
+    planned = publish_card(title: "Planned in phase")
+    planned.toggle_tag_with "phase:p4"
+
+    group = phase_group("p4")
+    segments = group.meter_segments
+
+    assert_equal [ :shipped, :in_flight, :stalled, :planned ], segments.map { |segment| segment[:status] }
+    assert_equal [ 1, 1, 1, 1 ], segments.map { |segment| segment[:count] }
+    assert_in_delta 100.0, segments.sum { |segment| segment[:percent] }
+  end
+
+  test "meter_segments is empty for a phase with no cards" do
+    publish_card(title: "Unrelated card")
+
+    empty_group = Board::Roadmap::PhaseGroup.new(label: "empty", title: "Empty", epics: [], cards: [], rollup: Board::Roadmap::Rollup.new(shipped: 0, not_now: 0, stalled: 0, in_flight: 0, planned: 0))
+
+    assert_equal [], empty_group.meter_segments
+  end
+
+  test "cards_by_status returns every status in STATUS_ORDER, with empty statuses as [], and cards under the right key" do
+    shipped = publish_card(title: "Shipped in phase")
+    shipped.toggle_tag_with "phase:p4"
+    shipped.close
+
+    planned = publish_card(title: "Planned in phase")
+    planned.toggle_tag_with "phase:p4"
+
+    group = phase_group("p4")
+    by_status = group.cards_by_status
+
+    assert_equal Board::Roadmap::STATUS_ORDER, by_status.keys
+    assert_equal [ shipped ], by_status[:shipped].map(&:card)
+    assert_equal [ planned ], by_status[:planned].map(&:card)
+    assert_equal [], by_status[:in_flight]
+    assert_equal [], by_status[:stalled]
+    assert_equal [], by_status[:not_now]
+  end
+
+  test "dimmed? is true for shipped and not_now cards, false for the rest" do
+    shipped = publish_card(title: "Shipped")
+    shipped.close
+
+    not_now = publish_card(title: "Postponed")
+    not_now.postpone
+
+    stalled = publish_card(title: "Stalled", column: columns(:writebook_in_progress))
+    stalled.create_activity_spike!
+    travel_to 3.months.from_now
+
+    in_flight = publish_card(title: "In flight", column: columns(:writebook_in_progress))
+    planned = publish_card(title: "Planned")
+
+    assert find_roadmap_card(shipped).dimmed?
+    assert find_roadmap_card(not_now).dimmed?
+    assert_not find_roadmap_card(stalled).dimmed?
+    assert_not find_roadmap_card(in_flight).dimmed?
+    assert_not find_roadmap_card(planned).dimmed?
+  end
+
   test "ordered_cards lists epics before stories, each ordered shipped, in_flight, stalled, planned, not_now" do
     shipped_story = publish_card(title: "Shipped story")
     shipped_story.toggle_tag_with "phase:p7"
@@ -279,6 +427,10 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_equal 0, summary.in_flight
     assert_equal 0, summary.deferred
     assert_equal 0, summary.planned
+    assert_equal 0, summary.total_cards
+    assert_equal 0, summary.shipped
+    assert_equal 0, summary.stalled
+    assert_equal 0, summary.completion_percent
   end
 
   test "closed wins over postponed when a card is somehow forced into both states" do

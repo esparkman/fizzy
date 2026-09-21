@@ -1,0 +1,38 @@
+<div class="roadmap__lanes flex flex-column gap-double margin-block-end-double">
+  <% @roadmap.phase_groups.each do |phase_group| %>
+    <% band_id = "roadmap_band_#{phase_group.label.parameterize}" %>
+
+    <section id="<%= band_id %>" class="roadmap__band" aria-labelledby="<%= band_id %>_title">
+      <div class="roadmap__band-head flex align-center gap">
+        <h2 id="<%= band_id %>_title" class="divider divider--fade flex-item-grow">
+          <span class="overflow-ellipsis"><%= phase_group.title %></span>
+        </h2>
+
+        <span class="roadmap__phase-done txt-small txt-subtle flex-item-no-shrink"><%= phase_group.rollup.shipped %>/<%= phase_group.rollup.total %> shipped</span>
+      </div>
+
+      <%= render "meter", phase_group: phase_group %>
+
+      <div class="roadmap__lane-row overflow-x">
+        <% phase_group.cards_by_status.each do |status, status_cards| %>
+          <% lane_id = "#{band_id}_lane_#{status}" %>
+          <div class="roadmap__lane" role="group" aria-labelledby="<%= lane_id %>_label">
+            <div class="roadmap__lane-head flex align-center gap-half txt-x-small txt-uppercase txt-subtle">
+              <span class="roadmap__tile-dot roadmap__status--<%= roadmap_status_modifier(status) %>" aria-hidden="true"></span>
+              <span id="<%= lane_id %>_label" class="flex-item-grow overflow-ellipsis"><%= roadmap_status_label(status) %></span>
+              <span class="roadmap__lane-count txt-nowrap"><%= status_cards.size %></span>
+            </div>
+
+            <div class="roadmap__lane-body flex flex-column gap-half">
+              <% if status_cards.any? %>
+                <%= render partial: "boards/roadmaps/lane_card", collection: status_cards, as: :roadmap_card %>
+              <% else %>
+                <span class="roadmap__lane-empty txt-x-small txt-subtle" aria-hidden="true">—</span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</div>

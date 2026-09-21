@@ -188,6 +188,7 @@ Rails.application.routes.draw do
     resources :passkeys, except: %i[ show new ]
     resources :pins
     resource :timezone
+    resource :roadmap_view, only: :update
     resource :menu
   end
 

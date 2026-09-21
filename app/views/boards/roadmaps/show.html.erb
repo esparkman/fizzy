@@ -13,30 +13,22 @@
   </h1>
 <% end %>
 
-<div class="panel panel--wide shadow center roadmap">
-  <% summary = @roadmap.summary %>
-  <ul class="roadmap__summary flex flex-wrap gap margin-none unpad list-style-none margin-block-end-double">
-    <li class="flex flex-column gap-none">
-      <strong class="txt-x-large"><%= summary.epics_shipped %>/<%= summary.total_epics %></strong>
-      <span class="txt-small txt-subtle txt-uppercase">Epics shipped</span>
-    </li>
-    <li class="flex flex-column gap-none">
-      <strong class="txt-x-large"><%= summary.in_flight %></strong>
-      <span class="txt-small txt-subtle txt-uppercase">In flight</span>
-    </li>
-    <li class="flex flex-column gap-none">
-      <strong class="txt-x-large"><%= summary.deferred %></strong>
-      <span class="txt-small txt-subtle txt-uppercase">Deferred</span>
-    </li>
-    <li class="flex flex-column gap-none">
-      <strong class="txt-x-large"><%= summary.planned %></strong>
-      <span class="txt-small txt-subtle txt-uppercase">Planned</span>
-    </li>
-  </ul>
+<% lanes_view = @view == "lanes" %>
 
+<div class="panel <%= lanes_view ? "roadmap--lanes" : "panel--wide" %> shadow center roadmap">
   <% if @roadmap.phase_groups.empty? %>
-    <p class="txt-subtle">No cards on this board yet.</p>
+    <div class="blank-slate roadmap__blank-slate flex flex-column align-center gap-half txt-align-center">
+      <%= icon_tag "board", class: "roadmap__blank-slate-icon", style: "--icon-size: 2rem" %>
+      <h2 class="margin-none">No roadmap yet</h2>
+      <p class="txt-subtle margin-none">Tag cards <code>phase:</code> to start building it out here.</p>
+    </div>
   <% else %>
-    <%= render partial: "boards/roadmaps/phase_group", collection: @roadmap.phase_groups, as: :phase_group %>
+    <%= render "header", roadmap: @roadmap %>
+
+    <% if lanes_view %>
+      <%= render "lanes" %>
+    <% else %>
+      <%= render partial: "boards/roadmaps/phase_group", collection: @roadmap.phase_groups, as: :phase_group %>
+    <% end %>
   <% end %>
 </div>

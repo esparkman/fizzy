@@ -6,6 +6,14 @@ class Board::Roadmap
 
   RoadmapCard = Data.define(:card, :title, :number, :status, :type, :domains, :steps_completed, :steps_total) do
     def status_rank = STATUS_ORDER.index(status)
+
+    def steps_percent
+      return 0 if steps_total.zero?
+
+      (steps_completed * 100 / steps_total)
+    end
+
+    def dimmed? = status.in?(%i[ shipped not_now ])
   end
 
   PhaseGroup = Data.define(:label, :title, :epics, :cards, :rollup) do
@@ -16,6 +24,21 @@ class Board::Roadmap
     def ordered_cards
       epics.sort_by(&:status_rank) + cards.sort_by(&:status_rank)
     end
+
+    def meter_segments
+      return [] if rollup.total.zero?
+
+      STATUS_ORDER.filter_map do |status|
+        count = rollup.public_send(status)
+        next if count.zero?
+        { status:, count:, percent: (count * 100.0 / rollup.total).round(1) }
+      end
+    end
+
+    def cards_by_status
+      grouped = all_cards.group_by(&:status)
+      STATUS_ORDER.index_with { |status| grouped.fetch(status, []) }
+    end
   end
 
   Rollup = Data.define(:shipped, :not_now, :stalled, :in_flight, :planned) do
@@ -24,7 +47,13 @@ class Board::Roadmap
     end
   end
 
-  Summary = Data.define(:total_epics, :epics_shipped, :in_flight, :deferred, :planned)
+  Summary = Data.define(:total_epics, :epics_shipped, :in_flight, :deferred, :planned, :total_cards, :shipped, :stalled) do
+    def completion_percent
+      return 0 if total_cards.zero?
+
+      (shipped * 100 / total_cards)
+    end
+  end
 
   PHASE_NAMESPACE_PATTERN = /\Aphase:(.+)\z/
   PHASE_BARE_PATTERN = /\Ap(\d+)\z/
@@ -70,13 +99,17 @@ class Board::Roadmap
     def build_summary
       roadmap_cards = phase_groups.flat_map(&:all_cards)
       epics = roadmap_cards.select { |roadmap_card| roadmap_card.type == :epic }
+      counts = status_counts(roadmap_cards)
 
       Summary.new(
         total_epics: epics.size,
         epics_shipped: epics.count { |roadmap_card| roadmap_card.status == :shipped },
-        in_flight: roadmap_cards.count { |roadmap_card| roadmap_card.status == :in_flight },
-        deferred: roadmap_cards.count { |roadmap_card| roadmap_card.status == :not_now },
-        planned: roadmap_cards.count { |roadmap_card| roadmap_card.status == :planned }
+        in_flight: counts.fetch(:in_flight, 0),
+        deferred: counts.fetch(:not_now, 0),
+        planned: counts.fetch(:planned, 0),
+        total_cards: roadmap_cards.size,
+        shipped: counts.fetch(:shipped, 0),
+        stalled: counts.fetch(:stalled, 0)
       )
     end
 
@@ -116,13 +149,19 @@ class Board::Roadmap
     end
 
     def rollup_for(roadmap_cards)
+      counts = status_counts(roadmap_cards)
+
       Rollup.new(
-        shipped: roadmap_cards.count { |roadmap_card| roadmap_card.status == :shipped },
-        not_now: roadmap_cards.count { |roadmap_card| roadmap_card.status == :not_now },
-        stalled: roadmap_cards.count { |roadmap_card| roadmap_card.status == :stalled },
-        in_flight: roadmap_cards.count { |roadmap_card| roadmap_card.status == :in_flight },
-        planned: roadmap_cards.count { |roadmap_card| roadmap_card.status == :planned }
+        shipped: counts.fetch(:shipped, 0),
+        not_now: counts.fetch(:not_now, 0),
+        stalled: counts.fetch(:stalled, 0),
+        in_flight: counts.fetch(:in_flight, 0),
+        planned: counts.fetch(:planned, 0)
       )
+    end
+
+    def status_counts(roadmap_cards)
+      roadmap_cards.group_by(&:status).transform_values(&:size)
     end
 
     # Namespaced tag wins over its bare fallback; among several recognized

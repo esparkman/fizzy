@@ -204,6 +204,18 @@
   --color-negative: oklch(var(--lch-red-dark));
   --color-positive: oklch(var(--lch-green-dark));
   --color-link: oklch(var(--lch-blue-dark));
+
+  --color-status-shipped: oklch(var(--lch-green-dark));
+  --color-status-shipped-bg: oklch(var(--lch-green-lightest));
+  --color-status-in-flight: oklch(var(--lch-blue-dark));
+  --color-status-in-flight-bg: oklch(var(--lch-blue-lightest));
+  --color-status-stalled: oklch(var(--lch-yellow-darker));
+  --color-status-stalled-bg: oklch(var(--lch-yellow-lightest));
+  --color-status-planned: oklch(var(--lch-ink-dark));
+  --color-status-planned-bg: oklch(var(--lch-ink-lightest));
+  --color-status-deferred: oklch(var(--lch-ink-darkest));
+  --color-status-deferred-bg: transparent;
+
   --color-selected-light: oklch(var(--lch-blue-lightest));
   --color-selected: oklch(var(--lch-blue-lighter));
   --color-selected-dark: oklch(var(--lch-blue-light));

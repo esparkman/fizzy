@@ -1,21 +1,24 @@
-<%
-  rollup = phase_group.rollup
-  rollup_parts = Board::Roadmap::STATUS_ORDER.filter_map do |status|
-    count = rollup.public_send(status)
-    "#{count} #{roadmap_status_label(status).downcase}" if count > 0
-  end
-%>
+<% phase_id = "roadmap_phase_#{phase_group.label.parameterize}" %>
 
-<section id="roadmap_phase_<%= phase_group.label.parameterize %>" class="roadmap__phase margin-block-end-double">
-  <h2 class="divider divider--fade">
-    <span class="overflow-ellipsis"><%= phase_group.title %></span>
-  </h2>
+<section id="<%= phase_id %>" class="roadmap__phase margin-block-end-double" data-controller="roadmap-collapse">
+  <div class="roadmap__phase-head">
+    <button type="button" class="btn btn--plain roadmap__disclosure" aria-expanded="true" aria-controls="<%= phase_id %>_body" data-roadmap-collapse-target="button" data-action="click->roadmap-collapse#toggle">
+      <%= icon_tag "caret-down" %>
+      <span class="for-screen-reader">Toggle <%= phase_group.title %></span>
+    </button>
 
-  <% if rollup_parts.any? %>
-    <p class="txt-small txt-subtle"><%= rollup_parts.join(" · ") %></p>
-  <% end %>
+    <h2 class="divider divider--fade flex-item-grow">
+      <span class="overflow-ellipsis"><%= phase_group.title %></span>
+    </h2>
 
-  <ul class="roadmap__cards flex flex-column gap-half margin-none unpad">
-    <%= render partial: "boards/roadmaps/roadmap_card", collection: phase_group.ordered_cards, as: :roadmap_card %>
-  </ul>
+    <span class="roadmap__phase-done txt-small txt-subtle flex-item-no-shrink"><%= phase_group.rollup.shipped %>/<%= phase_group.rollup.total %> shipped</span>
+  </div>
+
+  <%= render "meter", phase_group: phase_group %>
+
+  <div id="<%= phase_id %>_body" data-roadmap-collapse-target="body">
+    <ul class="roadmap__cards flex flex-column gap-half margin-none unpad margin-block-start-half">
+      <%= render partial: "boards/roadmaps/roadmap_card", collection: phase_group.ordered_cards, as: :roadmap_card %>
+    </ul>
+  </div>
 </section>

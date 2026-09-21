@@ -1,0 +1,371 @@
+@layer components {
+  .roadmap {
+    --roadmap-step-bar-width: 2.75rem;
+  }
+
+  .roadmap__hero {
+    align-items: center;
+    border-block-end: var(--border);
+    padding-block-end: calc(var(--block-space) * 1.5);
+  }
+
+  .roadmap__ring {
+    block-size: 6rem;
+    flex: none;
+    inline-size: 6rem;
+    position: relative;
+  }
+
+  .roadmap__ring-svg {
+    transform: rotate(-90deg);
+  }
+
+  .roadmap__ring-track {
+    stroke: var(--color-ink-lighter);
+  }
+
+  .roadmap__ring-progress {
+    stroke: var(--color-status-shipped);
+    transition: stroke-dashoffset 0.2s ease-out;
+  }
+
+  .roadmap__ring-label {
+    display: grid;
+    inset: 0;
+    place-items: center;
+    position: absolute;
+    text-align: center;
+  }
+
+  .roadmap__hero-stat {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .roadmap__tiles {
+    margin-inline-start: auto;
+  }
+
+  .roadmap__tile {
+    align-items: center;
+    display: flex;
+  }
+
+  .roadmap__tile strong {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .roadmap__tile-dot {
+    background-color: currentColor;
+    block-size: 0.6em;
+    border-radius: 50%;
+    flex: none;
+    inline-size: 0.6em;
+
+    /* Unlike the row marker/text, this dot (legend tiles + lane-head labels)
+       is decorative and aria-hidden, and never sits on a .translucent
+       ancestor -- so it doesn't inherit any row-level de-emphasis. Now that
+       --color-status-deferred is full-strength ink (see the row marker's
+       contrast fix above), mute just this dot so "Not now" still reads as
+       the most muted status in the legend, rather than the darkest. */
+    &.roadmap__status--deferred {
+      opacity: 0.5;
+    }
+  }
+
+  .roadmap__marker {
+    --icon-size: 0.75em;
+    --roadmap-status-bg: var(--color-status-planned-bg);
+    --roadmap-status-color: var(--color-status-planned);
+
+    align-items: center;
+    background-color: var(--roadmap-status-bg);
+    border-radius: 50%;
+    block-size: 1.3em;
+    color: var(--roadmap-status-color);
+    display: flex;
+    flex: none;
+    inline-size: 1.3em;
+    justify-content: center;
+
+    &.roadmap__marker--shipped {
+      --roadmap-status-bg: var(--color-status-shipped-bg);
+      --roadmap-status-color: var(--color-status-shipped);
+    }
+
+    &.roadmap__marker--in-flight {
+      --roadmap-status-bg: var(--color-status-in-flight-bg);
+      --roadmap-status-color: var(--color-status-in-flight);
+    }
+
+    &.roadmap__marker--stalled {
+      --roadmap-status-bg: var(--color-status-stalled-bg);
+      --roadmap-status-color: var(--color-status-stalled);
+    }
+
+    &.roadmap__marker--planned {
+      --roadmap-status-bg: var(--color-status-planned-bg);
+      --roadmap-status-color: var(--color-status-planned);
+    }
+
+    /* No extra opacity here: not_now/shipped rows are already dimmed by the
+       parent .translucent wrapper (see Board::Roadmap::RoadmapCard#dimmed?).
+       Stacking opacity here would compound with it and drop the marker
+       below the 3:1 contrast a non-text status indicator needs. */
+    &.roadmap__marker--deferred {
+      --roadmap-status-bg: var(--color-status-deferred-bg);
+      --roadmap-status-color: var(--color-status-deferred);
+    }
+  }
+
+  .roadmap__meter {
+    background-color: var(--color-ink-lightest);
+    block-size: 0.5rem;
+    border-radius: 99rem;
+    display: flex;
+    inline-size: 100%;
+    overflow: hidden;
+  }
+
+  .roadmap__meter-segment {
+    --roadmap-status-color: var(--color-status-planned);
+
+    background-color: var(--roadmap-status-color);
+    flex: 0 0 var(--w, 0%);
+
+    &.roadmap__meter-segment--shipped { --roadmap-status-color: var(--color-status-shipped); }
+    &.roadmap__meter-segment--in-flight { --roadmap-status-color: var(--color-status-in-flight); }
+    &.roadmap__meter-segment--stalled { --roadmap-status-color: var(--color-status-stalled); }
+    &.roadmap__meter-segment--planned { --roadmap-status-color: var(--color-status-planned); }
+    &.roadmap__meter-segment--deferred { --roadmap-status-color: var(--color-status-deferred); }
+
+    /* Rounded percentages can sum to just under 100% (e.g. 33/33/34 -> 33/33/33.4);
+       let the last segment absorb that slack so no bare track shows at the end. */
+    &.roadmap__meter-segment--last {
+      flex-grow: 1;
+    }
+  }
+
+  .roadmap__step-bar {
+    background-color: var(--color-ink-lightest);
+    block-size: 0.25rem;
+    border-radius: 99rem;
+    display: flex;
+    flex: none;
+    inline-size: var(--roadmap-step-bar-width);
+    overflow: hidden;
+  }
+
+  .roadmap__step-bar-fill {
+    background-color: var(--color-status-in-flight);
+    flex: 0 0 var(--w, 0%);
+  }
+
+  .roadmap__status--shipped { color: var(--color-status-shipped); }
+  .roadmap__status--in-flight { color: var(--color-status-in-flight); }
+  .roadmap__status--stalled { color: var(--color-status-stalled); }
+  .roadmap__status--planned { color: var(--color-status-planned); }
+  .roadmap__status--deferred { color: var(--color-status-deferred); }
+
+  .roadmap__row-spacer {
+    flex: 1 1 auto;
+    min-inline-size: 0.5rem;
+  }
+
+  .roadmap__epic-badge {
+    background-color: var(--color-ink-darker);
+    border-radius: 99rem;
+    color: var(--color-ink-inverted);
+    flex: none;
+    font-weight: 700;
+    padding: 0.15em 0.6em;
+  }
+
+  .roadmap__phase-head {
+    align-items: center;
+    display: flex;
+    gap: var(--inline-space);
+  }
+
+  .roadmap__disclosure {
+    --icon-size: 0.7em;
+
+    flex: none;
+
+    .icon {
+      transition: rotate 150ms ease-out;
+    }
+
+    &[aria-expanded="false"] .icon {
+      rotate: -90deg;
+    }
+  }
+
+  .roadmap__phase-done {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* Lanes view
+     ------------------------------------------------------------------------
+     Five status columns need more room than the 60ch reading panel, so lanes
+     mode widens the panel itself rather than escaping it. */
+  .roadmap--lanes {
+    --lane-min-width: 13rem;
+    --panel-size: min(100%, 100rem);
+  }
+
+  .roadmap__band {
+    margin-block-end: var(--block-space-double);
+  }
+
+  .roadmap__band-head {
+    align-items: center;
+  }
+
+  .roadmap__lane-row {
+    display: grid;
+    gap: var(--inline-space);
+    grid-auto-columns: minmax(var(--lane-min-width), 1fr);
+    grid-auto-flow: column;
+    padding-block: 0.25rem;
+
+    @media (min-width: 800px) {
+      grid-auto-columns: unset;
+
+      /* 5 = Board::Roadmap::STATUS_ORDER.length: one column per status. If that
+         list ever changes size, this needs to change with it. */
+      grid-template-columns: repeat(5, minmax(var(--lane-min-width), 1fr));
+    }
+  }
+
+  .roadmap__lane {
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space-half);
+    min-inline-size: 0;
+  }
+
+  .roadmap__lane-head {
+    padding-inline: 0.25rem;
+  }
+
+  .roadmap__lane-count {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .roadmap__lane-body {
+    background-color: var(--color-ink-lightest);
+    border-radius: 0.5em;
+    block-size: 100%;
+    padding: var(--block-space-half);
+  }
+
+  .roadmap__lane-empty {
+    display: block;
+    text-align: center;
+  }
+
+  .roadmap__chip {
+    background-color: var(--color-canvas);
+    border: var(--border-size, 1px) solid var(--color-ink-lighter);
+    border-radius: 0.4em;
+    color: var(--color-ink);
+    display: flex;
+    padding: var(--block-space-half);
+
+    &.translucent {
+      opacity: 0.7;
+    }
+
+    &:hover {
+      border-color: var(--color-ink-light);
+    }
+  }
+
+  .roadmap__chip-title {
+    --lines: 2;
+
+    font-weight: 500;
+  }
+
+  /* View switcher
+     ------------------------------------------------------------------------ */
+  .roadmap__view-switch {
+    --btn-padding: 0.4em 1.1em;
+
+    font-size: var(--text-small);
+  }
+
+  .roadmap__view-switch .btn[aria-pressed="true"] {
+    --btn-background: var(--color-ink);
+    --btn-border-color: var(--color-ink);
+    --btn-color: var(--color-ink-inverted);
+  }
+
+  /* Empty state
+     ------------------------------------------------------------------------ */
+  .roadmap__blank-slate {
+    padding: calc(var(--block-space) * 2);
+  }
+
+  .roadmap__blank-slate-icon {
+    color: var(--color-ink-light);
+  }
+
+  /* Mobile reflow
+     ------------------------------------------------------------------------ */
+  /* Laid out here rather than with the .flex/.gap-half utilities so this
+     component-layer media query can override its display at narrow widths:
+     @layer components sits below @layer utilities (see _global.css), so a
+     utility class's `display: flex` would otherwise always win. */
+  .roadmap__domains {
+    column-gap: var(--inline-space-half);
+    display: flex;
+    row-gap: var(--block-space-half);
+  }
+
+  .roadmap__domains-count {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .roadmap__hero {
+      align-items: flex-start;
+    }
+
+    .roadmap__tiles {
+      margin-inline-start: 0;
+    }
+
+    .roadmap__card .roadmap__step-bar,
+    .roadmap__card .roadmap__status-badge {
+      display: none;
+    }
+
+    /* Same clip recipe as utilities.css's .for-screen-reader, defined once
+       here rather than shared with it directly: @layer components sits
+       below @layer utilities (see _global.css), so applying that utility
+       class from within this media query wouldn't reliably override the
+       component's own `display: flex` at narrow widths. Keep in sync with
+       .for-screen-reader if that recipe ever changes.
+
+       Visually hidden rather than display:none: the "+N" pill is a sighted
+       shorthand, but screen reader users still need the actual domain
+       names, so the full list stays in the accessibility tree. Applied via
+       the .roadmap__visually-hidden class in the roadmap_card partial, so
+       this is the one place the recipe is written. */
+    .roadmap__card .roadmap__visually-hidden {
+      block-size: 1px;
+      clip-path: inset(50%);
+      display: block;
+      inline-size: 1px;
+      overflow: hidden;
+      position: absolute;
+      white-space: nowrap;
+    }
+
+    .roadmap__card .roadmap__domains-count {
+      display: inline-flex;
+    }
+  }
+}
