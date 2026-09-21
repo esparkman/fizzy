@@ -1,6 +1,6 @@
 module RoadmapsHelper
   RING_RADIUS = 42
-  RING_STROKE_WIDTH = 8
+  RING_STROKE_WIDTH = 7
   RING_CIRCUMFERENCE = (2 * Math::PI * RING_RADIUS).round(2)
 
   STATUS_ICONS = {

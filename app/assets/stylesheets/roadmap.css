@@ -7,7 +7,7 @@
   .roadmap__hero {
     border-block-end: var(--border);
     gap: var(--block-space);
-    padding-block-end: calc(var(--block-space) * 1.5);
+    padding-block-end: var(--block-space);
   }
 
   .roadmap__hero-top {
@@ -17,9 +17,9 @@
   }
 
   .roadmap__ring {
-    block-size: 6rem;
+    block-size: 7rem;
     flex: none;
-    inline-size: 6rem;
+    inline-size: 7rem;
     position: relative;
   }
 
@@ -38,14 +38,13 @@
 
   .roadmap__ring-label {
     display: grid;
+    gap: 0.15em;
     inset: 0;
+    margin-inline: auto;
+    max-inline-size: 4.5rem;
     place-items: center;
     position: absolute;
     text-align: center;
-  }
-
-  .roadmap__hero-stat {
-    font-variant-numeric: tabular-nums;
   }
 
   .roadmap__tiles {
@@ -67,7 +66,15 @@
     display: flex;
   }
 
-  .roadmap__tile strong {
+  /* Base state is the muted/passive treatment -- only "In flight" and
+     "Stalled" ever get promoted to a status color, and only once they have
+     a count (see .roadmap__status--in-flight / --stalled below, which are
+     defined later in this file and so win the cascade tie against these
+     equal-specificity, single-class base rules). Planned and Not now stay
+     muted regardless of count: they're not actionable, so they never
+     compete visually with the two states that are. */
+  .roadmap__tile-count {
+    color: var(--color-ink-dark);
     font-variant-numeric: tabular-nums;
   }
 
@@ -75,6 +82,7 @@
     background-color: currentColor;
     block-size: 0.6em;
     border-radius: 50%;
+    color: var(--color-ink-lighter);
     flex: none;
     inline-size: 0.6em;
 
@@ -82,7 +90,9 @@
        and the marker's contrast note below) -- --color-status-deferred is
        full-strength ink everywhere else. Mute just this legend dot so "Not
        now" still reads as the most muted status in the legend, rather than
-       the darkest.
+       the darkest. Still used by the lanes view's per-lane dot (_lanes.html.erb),
+       which always renders a status class -- the hero's own "Not now" tile no
+       longer applies it, relying on the lighter muted default above instead.
 
        A solid --color-ink-dark rather than opacity: alpha-blending
        --color-status-deferred (--color-ink-darkest) at 50% onto a light
@@ -93,6 +103,19 @@
     &.roadmap__status--deferred {
       background-color: var(--color-ink-dark);
     }
+  }
+
+  /* The one status that gets a background treatment: detaches "Stalled" as
+     the tile that needs acting on, rather than just reading a number. */
+  .roadmap__tile--alert {
+    background-color: var(--color-status-stalled-bg);
+    border-radius: 0.4em;
+    padding: 0.15em 0.5em;
+  }
+
+  .roadmap__tile--epics {
+    border-inline-start: var(--border);
+    padding-inline-start: var(--inline-space);
   }
 
   .roadmap__marker {
@@ -377,6 +400,19 @@
   @media (max-width: 639px) {
     .roadmap__hero-top {
       align-items: flex-start;
+    }
+
+    /* Let the completion module and the view toggle each claim a full row
+       instead of wrapping into a cramped partial-width pair. */
+    .roadmap__completion,
+    .roadmap__view-switch {
+      flex-basis: 100%;
+    }
+
+    .roadmap__tile--epics {
+      border-inline-start: none;
+      flex-basis: 100%;
+      padding-inline-start: 0;
     }
 
     .roadmap__card .roadmap__step-bar,

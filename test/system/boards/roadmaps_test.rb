@@ -48,8 +48,7 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
     end
 
     within ".roadmap__tiles" do
-      assert_text "1/1"
-      assert_text "Epics shipped"
+      assert_text "1/1 epics shipped"
     end
   end
 
@@ -193,6 +192,59 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
     within ".blank-slate" do
       assert_text "No roadmap yet"
       assert_text "phase:"
+    end
+  end
+
+  test "a board member sees the hero's Delivery progress caption" do
+    board = Board.create!(name: "Hero board", creator: users(:david), account: accounts(:"37s"))
+
+    Current.set(session: sessions(:david)) do
+      shipped = board.cards.create!(title: "Ship the thing", creator: users(:david), status: "published")
+      shipped.toggle_tag_with "phase:p1"
+      shipped.close
+
+      board.cards.create!(title: "Not shipped yet", creator: users(:david), status: "published").tap do |card|
+        card.toggle_tag_with "phase:p1"
+      end
+    end
+
+    sign_in_as(users(:david))
+    visit board_roadmap_url(board)
+
+    within ".roadmap__completion" do
+      # The eyebrow is visually uppercased via CSS text-transform, so the
+      # rendered text Capybara reads back is "DELIVERY PROGRESS".
+      assert_text(/delivery progress/i)
+      assert_text "1 of 2 shipped"
+    end
+  end
+
+  test "the Stalled tile's alert pill appears only once a card has actually stalled" do
+    board = Board.create!(name: "Stalled hero board", creator: users(:david), account: accounts(:"37s"))
+    column = board.columns.create!(name: "In progress")
+
+    Current.set(session: sessions(:david)) do
+      card = board.cards.create!(title: "Gone quiet", creator: users(:david), status: "published", column: column)
+      card.toggle_tag_with "phase:p1"
+      card.create_activity_spike!
+    end
+
+    sign_in_as(users(:david))
+    visit board_roadmap_url(board)
+
+    within ".roadmap__tiles" do
+      assert_no_selector ".roadmap__tile--alert"
+    end
+
+    # A card only reports stalled? once its activity spike and the card
+    # itself have both gone quiet for STALLED_AFTER_LAST_SPIKE_PERIOD (see
+    # Card::Stallable) -- travel past that window to flip the state.
+    travel_to 3.months.from_now do
+      visit board_roadmap_url(board)
+
+      within ".roadmap__tile--alert", text: /stalled/i do
+        assert_text "1"
+      end
     end
   end
 

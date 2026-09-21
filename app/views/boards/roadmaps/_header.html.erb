@@ -1,55 +1,62 @@
 <% summary = roadmap.summary %>
 
-<div class="flex justify-end margin-block-end">
-  <div class="btn__group roadmap__view-switch flex flex-wrap" role="group" aria-label="Roadmap view">
-    <%= button_to "List", my_roadmap_view_path, method: :patch,
-          params: { roadmap_view: "list", board_id: @board.id },
-          class: "btn", aria: { pressed: @view == "list" } %>
+<div class="roadmap__hero flex flex-column margin-block-end">
+  <div class="roadmap__hero-top flex flex-wrap justify-space-between">
+    <div class="roadmap__completion flex flex-column gap-half">
+      <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">Delivery progress</span>
 
-    <%= button_to "Lanes", my_roadmap_view_path, method: :patch,
-          params: { roadmap_view: "lanes", board_id: @board.id },
-          class: "btn", aria: { pressed: @view == "lanes" } %>
-  </div>
-</div>
+      <div class="flex align-center gap">
+        <div class="roadmap__ring">
+          <%= roadmap_progress_ring(summary.completion_percent) %>
+          <div class="roadmap__ring-label">
+            <strong class="roadmap__tabular txt-large font-weight-bold"><%= summary.completion_percent %>%</strong>
+            <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">done</span>
+          </div>
+        </div>
 
-<div class="roadmap__hero flex flex-column margin-block-end-double">
-  <div class="roadmap__hero-top flex flex-wrap">
-    <div class="roadmap__ring">
-      <%= roadmap_progress_ring(summary.completion_percent) %>
-      <div class="roadmap__ring-label">
-        <strong class="roadmap__tabular txt-large font-weight-bold"><%= summary.completion_percent %>%</strong>
-        <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">done</span>
+        <span class="roadmap__tabular txt-medium txt-subtle"><%= summary.shipped %> of <%= summary.total_cards %> shipped</span>
       </div>
     </div>
 
-    <div class="roadmap__hero-stat flex flex-column gap-none">
-      <div>
-        <strong class="txt-x-large font-weight-bold"><%= summary.shipped %></strong><span class="txt-medium txt-subtle"> / <%= summary.total_cards %> shipped</span>
-      </div>
-      <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">Delivery momentum</span>
+    <div class="btn__group roadmap__view-switch flex flex-wrap" role="group" aria-label="Roadmap view">
+      <%= button_to "List", my_roadmap_view_path, method: :patch,
+            params: { roadmap_view: "list", board_id: @board.id },
+            class: "btn", aria: { pressed: @view == "list" } %>
+
+      <%= button_to "Lanes", my_roadmap_view_path, method: :patch,
+            params: { roadmap_view: "lanes", board_id: @board.id },
+            class: "btn", aria: { pressed: @view == "lanes" } %>
     </div>
   </div>
 
   <ul class="roadmap__tiles flex flex-wrap margin-none unpad list-style-none">
     <li class="roadmap__tile gap-half txt-small">
-      <span class="roadmap__tile-dot roadmap__status--in-flight" aria-hidden="true"></span>
-      <strong class="font-weight-semibold"><%= summary.in_flight %></strong> In flight
+      <span class="roadmap__tile-dot<%= " roadmap__status--in-flight" if summary.in_flight.positive? %>" aria-hidden="true"></span>
+      <strong class="roadmap__tile-count<%= " roadmap__status--in-flight" if summary.in_flight.positive? %>"><%= summary.in_flight %></strong>
+      <span class="<%= summary.in_flight.positive? ? "font-weight-semibold" : "txt-subtle" %>">In flight</span>
     </li>
-    <li class="roadmap__tile gap-half txt-small">
-      <span class="roadmap__tile-dot roadmap__status--stalled" aria-hidden="true"></span>
-      <strong class="font-weight-semibold"><%= summary.stalled %></strong> Stalled
+
+    <li class="roadmap__tile gap-half txt-small<%= " roadmap__tile--alert" if summary.stalled.positive? %>">
+      <span class="roadmap__tile-dot<%= " roadmap__status--stalled" if summary.stalled.positive? %>" aria-hidden="true"></span>
+      <strong class="roadmap__tile-count<%= " roadmap__status--stalled font-weight-semibold" if summary.stalled.positive? %>"><%= summary.stalled %></strong>
+      <span class="<%= summary.stalled.positive? ? "" : "txt-subtle" %>">Stalled</span>
     </li>
+
     <li class="roadmap__tile gap-half txt-small">
-      <span class="roadmap__tile-dot roadmap__status--deferred" aria-hidden="true"></span>
-      <strong class="font-weight-semibold"><%= summary.deferred %></strong> Not now
+      <span class="roadmap__tile-dot" aria-hidden="true"></span>
+      <strong class="roadmap__tile-count"><%= summary.planned %></strong>
+      <span class="txt-subtle">Planned</span>
     </li>
+
     <li class="roadmap__tile gap-half txt-small">
-      <span class="roadmap__tile-dot roadmap__status--planned" aria-hidden="true"></span>
-      <strong class="font-weight-semibold"><%= summary.planned %></strong> Planned
+      <span class="roadmap__tile-dot" aria-hidden="true"></span>
+      <strong class="roadmap__tile-count"><%= summary.deferred %></strong>
+      <span class="txt-subtle">Not now</span>
     </li>
-    <li class="roadmap__tile gap-half txt-small">
-      <span class="roadmap__tile-dot roadmap__status--shipped" aria-hidden="true"></span>
-      <strong class="font-weight-semibold"><%= summary.epics_shipped %>/<%= summary.total_epics %></strong> Epics shipped
+
+    <li class="roadmap__tile roadmap__tile--epics gap-half txt-small">
+      <span class="roadmap__epic-badge txt-x-small txt-uppercase flex-item-no-shrink" aria-hidden="true">Epic</span>
+      <span><%= summary.epics_shipped %>/<%= summary.total_epics %> epics shipped</span>
     </li>
   </ul>
 </div>
