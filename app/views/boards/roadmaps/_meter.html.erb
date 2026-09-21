@@ -1,5 +1,5 @@
 <%
-  meter_segments = phase_group.meter_segments
+  meter_segments = rollup.segments
   rollup_breakdown = meter_segments.map { |segment| "#{segment[:count]} #{roadmap_status_label(segment[:status]).downcase}" }.join(", ")
 %>
 

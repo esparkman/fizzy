@@ -19,9 +19,13 @@ class Board::Roadmap
 
     def dimmed? = status == :not_now
 
+    # Card parent validation caps nesting at one level (a child can't itself
+    # be a parent), so this recursion never goes past grandchildren.
     def self_and_descendants
       [ self ] + children.flat_map(&:self_and_descendants)
     end
+
+    def shows_own_step_bar? = steps_total.positive? && children.empty?
   end
 
   PhaseGroup = Data.define(:label, :title, :epics, :cards, :rollup) do
@@ -33,25 +37,52 @@ class Board::Roadmap
       epics.sort_by(&:status_rank) + cards.sort_by(&:status_rank)
     end
 
-    def meter_segments
-      return [] if rollup.total.zero?
-
-      STATUS_ORDER.filter_map do |status|
-        count = rollup.public_send(status)
-        next if count.zero?
-        { status:, count:, percent: (count * 100.0 / rollup.total).round(1) }
-      end
-    end
-
+    # Lanes ignores parentage entirely: every card, top-level or nested
+    # child, gets its own chip in its status column, and its band meter and
+    # "shipped" count (#flat_rollup) reflect that same flattened set so the
+    # band header never contradicts the chips rendered beneath it. List
+    # keeps the top-level `rollup` above -- its rows are top-level, and each
+    # epic carries its own `child_rollup` meter for its children.
     def cards_by_status
-      grouped = all_cards.group_by(&:status)
+      grouped = flattened_cards.group_by(&:status)
       STATUS_ORDER.index_with { |status| grouped.fetch(status, []) }
     end
+
+    def flat_rollup
+      Rollup.for(flattened_cards)
+    end
+
+    private
+      def flattened_cards
+        all_cards.flat_map(&:self_and_descendants)
+      end
   end
 
   Rollup = Data.define(:shipped, :not_now, :stalled, :in_flight, :planned) do
+    def self.for(roadmap_cards)
+      counts = roadmap_cards.group_by(&:status).transform_values(&:size)
+
+      new(
+        shipped: counts.fetch(:shipped, 0),
+        not_now: counts.fetch(:not_now, 0),
+        stalled: counts.fetch(:stalled, 0),
+        in_flight: counts.fetch(:in_flight, 0),
+        planned: counts.fetch(:planned, 0)
+      )
+    end
+
     def total
       shipped + not_now + stalled + in_flight + planned
+    end
+
+    def segments
+      return [] if total.zero?
+
+      STATUS_ORDER.filter_map do |status|
+        count = public_send(status)
+        next if count.zero?
+        { status:, count:, percent: (count * 100.0 / total).round(1) }
+      end
     end
   end
 
@@ -99,7 +130,7 @@ class Board::Roadmap
           title: phase_title_for(label),
           epics: epics,
           cards: stories,
-          rollup: rollup_for(roadmap_cards)
+          rollup: Rollup.for(roadmap_cards)
         )
       end
     end
@@ -158,7 +189,7 @@ class Board::Roadmap
         steps_completed: card.steps.count(&:completed?) + children.sum(&:steps_completed),
         steps_total: card.steps.size + children.sum(&:steps_total),
         children: children,
-        child_rollup: children.any? ? rollup_for(children) : nil
+        child_rollup: children.any? ? Rollup.for(children) : nil
       )
     end
 
@@ -176,18 +207,6 @@ class Board::Roadmap
       else
         :planned
       end
-    end
-
-    def rollup_for(roadmap_cards)
-      counts = status_counts(roadmap_cards)
-
-      Rollup.new(
-        shipped: counts.fetch(:shipped, 0),
-        not_now: counts.fetch(:not_now, 0),
-        stalled: counts.fetch(:stalled, 0),
-        in_flight: counts.fetch(:in_flight, 0),
-        planned: counts.fetch(:planned, 0)
-      )
     end
 
     def status_counts(roadmap_cards)

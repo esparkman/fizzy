@@ -455,7 +455,7 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_equal 4, group.rollup.total
   end
 
-  test "meter_segments skips zero-count statuses and orders the rest by STATUS_ORDER, percents summing to 100" do
+  test "Rollup#segments skips zero-count statuses and orders the rest by STATUS_ORDER, percents summing to 100" do
     shipped = publish_card(title: "Shipped in phase")
     shipped.toggle_tag_with "phase:p4"
     shipped.close
@@ -473,19 +473,17 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     planned.toggle_tag_with "phase:p4"
 
     group = phase_group("p4")
-    segments = group.meter_segments
+    segments = group.rollup.segments
 
     assert_equal [ :shipped, :in_flight, :stalled, :planned ], segments.map { |segment| segment[:status] }
     assert_equal [ 1, 1, 1, 1 ], segments.map { |segment| segment[:count] }
     assert_in_delta 100.0, segments.sum { |segment| segment[:percent] }
   end
 
-  test "meter_segments is empty for a phase with no cards" do
-    publish_card(title: "Unrelated card")
+  test "Rollup#segments is empty for a rollup with no cards" do
+    empty_rollup = Board::Roadmap::Rollup.new(shipped: 0, not_now: 0, stalled: 0, in_flight: 0, planned: 0)
 
-    empty_group = Board::Roadmap::PhaseGroup.new(label: "empty", title: "Empty", epics: [], cards: [], rollup: Board::Roadmap::Rollup.new(shipped: 0, not_now: 0, stalled: 0, in_flight: 0, planned: 0))
-
-    assert_equal [], empty_group.meter_segments
+    assert_equal [], empty_rollup.segments
   end
 
   test "cards_by_status returns every status in STATUS_ORDER, with empty statuses as [], and cards under the right key" do
@@ -582,6 +580,48 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     card.create_not_now!(user: users(:david))
 
     assert_equal :shipped, status_of(card)
+  end
+
+  test "cards_by_status flattens an epic's children into their own status lanes alongside top-level cards" do
+    epic = publish_card(title: "Epic for lanes")
+    epic.toggle_tag_with "phase:p12"
+    epic.close
+
+    shipped_child = publish_child(title: "Shipped child", parent: epic)
+    shipped_child.close
+
+    planned_child = publish_child(title: "Planned child", parent: epic)
+
+    group = phase_group("p12")
+    by_status = group.cards_by_status
+
+    assert_includes by_status[:shipped].map(&:card), epic
+    assert_includes by_status[:shipped].map(&:card), shipped_child
+    assert_includes by_status[:planned].map(&:card), planned_child
+    assert_not_includes by_status[:shipped].map(&:card), planned_child
+
+    # The band header's meter/count must match the same flattened set the
+    # lanes render, not the top-level-only `rollup` -- 2 shipped (the epic
+    # itself and its shipped child) out of 3 total.
+    assert_equal 2, group.flat_rollup.shipped
+    assert_equal 3, group.flat_rollup.total
+    assert_not_equal group.rollup.shipped, group.flat_rollup.shipped
+  end
+
+  test "cards_by_status and flat_rollup issue no queries beyond the initial cards load" do
+    epic = publish_card(title: "Query guarded lanes epic")
+    epic.toggle_tag_with "phase:p13"
+    publish_child(title: "Query guarded lanes child", parent: epic)
+
+    roadmap = Board::Roadmap.new(@board)
+    roadmap.phase_groups # warm the single preloaded query build_phase_groups relies on
+
+    assert_no_queries do
+      roadmap.phase_groups.each do |group|
+        group.cards_by_status
+        group.flat_rollup
+      end
+    end
   end
 
   test "a published card on a different board never appears in this board's roadmap" do
