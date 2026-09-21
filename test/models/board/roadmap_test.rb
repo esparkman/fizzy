@@ -258,6 +258,149 @@ class Board::RoadmapTest < ActiveSupport::TestCase
     assert_not_includes group.epics.map(&:card), card
   end
 
+  test "an epic's children are nested under it, not listed as top-level rows" do
+    epic = publish_card(title: "Epic with children")
+    epic.toggle_tag_with "phase:p8"
+
+    child_one = publish_child(title: "Child one", parent: epic)
+    child_two = publish_child(title: "Child two", parent: epic)
+
+    group = phase_group("p8")
+    epic_card = group.epics.find { |roadmap_card| roadmap_card.card == epic }
+
+    assert_equal [ child_one, child_two ], epic_card.children.map(&:card)
+    assert_not_includes group.cards.map(&:card), child_one
+    assert_not_includes group.cards.map(&:card), child_two
+    assert_not_includes group.epics.map(&:card), child_one
+  end
+
+  test "a child inherits its parent's phase even when the child has its own conflicting phase tag" do
+    epic = publish_card(title: "Phase-owning epic")
+    epic.toggle_tag_with "phase:p9"
+
+    child = publish_child(title: "Mistagged child", parent: epic)
+    child.toggle_tag_with "phase:p1"
+
+    p9_group = phase_group("p9")
+    epic_card = p9_group.epics.find { |roadmap_card| roadmap_card.card == epic }
+
+    assert_includes epic_card.children.map(&:card), child
+    assert_nil phase_group("p1")
+  end
+
+  test "a child whose epic is unphased nests under the epic in the Unphased group" do
+    epic = publish_card(title: "Unphased epic")
+    child = publish_child(title: "Unphased child", parent: epic)
+
+    epic_card = phase_group("unphased").epics.find { |roadmap_card| roadmap_card.card == epic }
+
+    assert_includes epic_card.children.map(&:card), child
+  end
+
+  test "an epic's child_rollup and aggregated steps reflect its children" do
+    epic = publish_card(title: "Epic with progress")
+    epic.steps.create!(content: "epic step", completed: true)
+
+    shipped_child = publish_child(title: "Shipped child", parent: epic)
+    shipped_child.steps.create!(content: "one", completed: true)
+    shipped_child.steps.create!(content: "two", completed: false)
+    shipped_child.close
+
+    planned_child = publish_child(title: "Planned child", parent: epic)
+    planned_child.steps.create!(content: "one", completed: true)
+
+    epic_card = find_roadmap_card(epic)
+
+    assert_equal 1, epic_card.child_rollup.shipped
+    assert_equal 1, epic_card.child_rollup.planned
+    assert_equal 2, epic_card.child_rollup.total
+    assert_equal 3, epic_card.steps_completed
+    assert_equal 4, epic_card.steps_total
+  end
+
+  test "a childless card reports a nil child_rollup" do
+    card = publish_card(title: "No children here")
+
+    assert_nil find_roadmap_card(card).child_rollup
+  end
+
+  test "a structurally-detected epic (has children, no epic tag) is treated as an epic" do
+    epic = publish_card(title: "Untagged epic")
+    publish_child(title: "Its only child", parent: epic)
+
+    epic_card = find_roadmap_card(epic)
+
+    assert_equal :epic, epic_card.type
+  end
+
+  test "summary counts children toward total_epics, and structural epics count even when untagged" do
+    board = Board.create!(name: "Structural epics", creator: users(:david), account: accounts(:"37s"))
+
+    epic = board.cards.create!(title: "Structural epic", creator: users(:david), status: "published")
+    board.cards.create!(title: "Its child", creator: users(:david), status: "published", parent: epic)
+
+    summary = Board::Roadmap.new(board).summary
+
+    assert_equal 1, summary.total_epics
+    assert_equal 2, summary.total_cards
+  end
+
+  test "summary totals count nested children the same as it would flat cards" do
+    board = Board.create!(name: "Nested vs flat", creator: users(:david), account: accounts(:"37s"))
+
+    epic = board.cards.create!(title: "Epic", creator: users(:david), status: "published")
+    epic.toggle_tag_with "type:epic"
+    epic.close
+
+    child = board.cards.create!(title: "Child", creator: users(:david), status: "published", parent: epic)
+    child.postpone
+
+    flat_board = Board.create!(name: "Flat comparison", creator: users(:david), account: accounts(:"37s"))
+    flat_epic = flat_board.cards.create!(title: "Epic", creator: users(:david), status: "published")
+    flat_epic.toggle_tag_with "type:epic"
+    flat_epic.close
+    flat_story = flat_board.cards.create!(title: "Child", creator: users(:david), status: "published")
+    flat_story.postpone
+
+    nested_summary = Board::Roadmap.new(board).summary
+    flat_summary = Board::Roadmap.new(flat_board).summary
+
+    assert_equal flat_summary.total_cards, nested_summary.total_cards
+    assert_equal flat_summary.shipped, nested_summary.shipped
+    assert_equal flat_summary.deferred, nested_summary.deferred
+  end
+
+  test "a published child whose parent isn't published renders top-level and counts in the summary" do
+    board = Board.create!(name: "Orphaned child", creator: users(:david), account: accounts(:"37s"))
+
+    drafted_parent = board.cards.create!(title: "Drafted parent", creator: users(:david), status: "drafted")
+    orphan = board.cards.create!(title: "Orphaned child", creator: users(:david), status: "published", parent: drafted_parent)
+    orphan.close
+
+    roadmap = Board::Roadmap.new(board)
+
+    assert_includes roadmap.phase_groups.flat_map(&:all_cards).map(&:card), orphan
+    assert_equal 1, roadmap.summary.total_cards
+    assert_equal 1, roadmap.summary.shipped
+  end
+
+  test "nesting children under their epic issues no queries beyond the initial cards load" do
+    epic = publish_card(title: "Query guarded epic")
+    epic.toggle_tag_with "phase:p11"
+
+    child_one = publish_child(title: "Guarded child one", parent: epic)
+    child_one.close
+    child_two = publish_child(title: "Guarded child two", parent: epic, column: columns(:writebook_in_progress))
+
+    roadmap = Board::Roadmap.new(@board)
+    roadmap.phase_groups # warm the single preloaded query build_phase_groups relies on
+
+    assert_no_queries do
+      roadmap.phase_groups
+      roadmap.summary
+    end
+  end
+
   test "a card with no type tag defaults to a story" do
     card = publish_card(title: "Untyped card")
 
@@ -450,6 +593,10 @@ class Board::RoadmapTest < ActiveSupport::TestCase
   private
     def publish_card(title:, column: nil)
       @board.cards.create!(title: title, creator: users(:david), status: "published", column: column)
+    end
+
+    def publish_child(title:, parent:, column: nil)
+      @board.cards.create!(title: title, creator: users(:david), status: "published", column: column, parent: parent)
     end
 
     def roadmap
