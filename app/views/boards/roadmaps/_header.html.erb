@@ -12,42 +12,44 @@
   </div>
 </div>
 
-<div class="roadmap__hero flex flex-wrap gap-double margin-block-end-double">
-  <div class="roadmap__ring">
-    <%= roadmap_progress_ring(summary.completion_percent) %>
-    <div class="roadmap__ring-label">
-      <strong class="txt-large"><%= summary.completion_percent %>%</strong>
-      <span class="txt-small txt-uppercase txt-subtle">done</span>
+<div class="roadmap__hero flex flex-column margin-block-end-double">
+  <div class="roadmap__hero-top flex flex-wrap">
+    <div class="roadmap__ring">
+      <%= roadmap_progress_ring(summary.completion_percent) %>
+      <div class="roadmap__ring-label">
+        <strong class="roadmap__tabular txt-large font-weight-bold"><%= summary.completion_percent %>%</strong>
+        <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">done</span>
+      </div>
+    </div>
+
+    <div class="roadmap__hero-stat flex flex-column gap-none">
+      <div>
+        <strong class="txt-x-large font-weight-bold"><%= summary.shipped %></strong><span class="txt-medium txt-subtle"> / <%= summary.total_cards %> shipped</span>
+      </div>
+      <span class="roadmap__eyebrow txt-x-small txt-uppercase txt-subtle">Delivery momentum</span>
     </div>
   </div>
 
-  <div class="roadmap__hero-stat flex flex-column gap-none">
-    <div class="txt-x-large">
-      <%= summary.shipped %><span class="txt-large txt-subtle"> / <%= summary.total_cards %> shipped</span>
-    </div>
-    <span class="txt-small txt-subtle txt-uppercase">Delivery momentum</span>
-  </div>
-
-  <ul class="roadmap__tiles flex flex-wrap gap margin-none unpad list-style-none">
-    <li class="roadmap__tile gap-half">
+  <ul class="roadmap__tiles flex flex-wrap margin-none unpad list-style-none">
+    <li class="roadmap__tile gap-half txt-small">
       <span class="roadmap__tile-dot roadmap__status--in-flight" aria-hidden="true"></span>
-      <strong><%= summary.in_flight %></strong> In flight
+      <strong class="font-weight-semibold"><%= summary.in_flight %></strong> In flight
     </li>
-    <li class="roadmap__tile gap-half">
+    <li class="roadmap__tile gap-half txt-small">
       <span class="roadmap__tile-dot roadmap__status--stalled" aria-hidden="true"></span>
-      <strong><%= summary.stalled %></strong> Stalled
+      <strong class="font-weight-semibold"><%= summary.stalled %></strong> Stalled
     </li>
-    <li class="roadmap__tile gap-half">
+    <li class="roadmap__tile gap-half txt-small">
       <span class="roadmap__tile-dot roadmap__status--deferred" aria-hidden="true"></span>
-      <strong><%= summary.deferred %></strong> Not now
+      <strong class="font-weight-semibold"><%= summary.deferred %></strong> Not now
     </li>
-    <li class="roadmap__tile gap-half">
+    <li class="roadmap__tile gap-half txt-small">
       <span class="roadmap__tile-dot roadmap__status--planned" aria-hidden="true"></span>
-      <strong><%= summary.planned %></strong> Planned
+      <strong class="font-weight-semibold"><%= summary.planned %></strong> Planned
     </li>
-    <li class="roadmap__tile gap-half">
+    <li class="roadmap__tile gap-half txt-small">
       <span class="roadmap__tile-dot roadmap__status--shipped" aria-hidden="true"></span>
-      <strong><%= summary.epics_shipped %>/<%= summary.total_epics %></strong> Epics shipped
+      <strong class="font-weight-semibold"><%= summary.epics_shipped %>/<%= summary.total_epics %></strong> Epics shipped
     </li>
   </ul>
 </div>

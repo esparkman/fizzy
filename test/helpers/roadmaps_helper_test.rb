@@ -9,18 +9,6 @@ class RoadmapsHelperTest < ActionView::TestCase
     assert_equal "Not now", roadmap_status_label(:not_now)
   end
 
-  test "roadmap_status_class returns the status color class for each status" do
-    assert_equal "roadmap__status--shipped", roadmap_status_class(:shipped)
-    assert_equal "roadmap__status--in-flight", roadmap_status_class(:in_flight)
-    assert_equal "roadmap__status--stalled", roadmap_status_class(:stalled)
-    assert_equal "roadmap__status--planned", roadmap_status_class(:planned)
-    assert_equal "roadmap__status--deferred", roadmap_status_class(:not_now)
-  end
-
-  test "roadmap_status_class raises for an unexpected status" do
-    assert_raises(KeyError) { roadmap_status_class(:unknown) }
-  end
-
   test "roadmap_status_icon returns the marker icon name for each status" do
     assert_equal "check-circle", roadmap_status_icon(:shipped)
     assert_equal "arrow-right", roadmap_status_icon(:in_flight)

@@ -1,12 +1,19 @@
 @layer components {
   .roadmap {
     --roadmap-step-bar-width: 2.75rem;
+    --roadmap-tracking: 0.05em;
   }
 
   .roadmap__hero {
-    align-items: center;
     border-block-end: var(--border);
+    gap: var(--block-space);
     padding-block-end: calc(var(--block-space) * 1.5);
+  }
+
+  .roadmap__hero-top {
+    align-items: center;
+    column-gap: var(--inline-space-double);
+    row-gap: var(--block-space);
   }
 
   .roadmap__ring {
@@ -42,7 +49,17 @@
   }
 
   .roadmap__tiles {
-    margin-inline-start: auto;
+    column-gap: var(--inline-space);
+    row-gap: var(--block-space-half);
+  }
+
+  .roadmap__eyebrow {
+    font-weight: 600;
+    letter-spacing: var(--roadmap-tracking);
+  }
+
+  .roadmap__tabular {
+    font-variant-numeric: tabular-nums;
   }
 
   .roadmap__tile {
@@ -61,14 +78,20 @@
     flex: none;
     inline-size: 0.6em;
 
-    /* Unlike the row marker/text, this dot (legend tiles + lane-head labels)
-       is decorative and aria-hidden, and never sits on a .translucent
-       ancestor -- so it doesn't inherit any row-level de-emphasis. Now that
-       --color-status-deferred is full-strength ink (see the row marker's
-       contrast fix above), mute just this dot so "Not now" still reads as
-       the most muted status in the legend, rather than the darkest. */
+    /* Rows no longer dim status via opacity (see Board::Roadmap::RoadmapCard#dimmed?
+       and the marker's contrast note below) -- --color-status-deferred is
+       full-strength ink everywhere else. Mute just this legend dot so "Not
+       now" still reads as the most muted status in the legend, rather than
+       the darkest.
+
+       A solid --color-ink-dark rather than opacity: alpha-blending
+       --color-status-deferred (--color-ink-darkest) at 50% onto a light
+       canvas landed at ~1.9:1, well under the 3:1 WCAG non-text minimum;
+       --color-ink-dark is the same muted token the not_now title already
+       uses (see Board::Roadmap::RoadmapCard#dimmed?) and holds 4.65:1+
+       against canvas in both themes regardless of what's behind it. */
     &.roadmap__status--deferred {
-      opacity: 0.5;
+      background-color: var(--color-ink-dark);
     }
   }
 
@@ -107,10 +130,10 @@
       --roadmap-status-color: var(--color-status-planned);
     }
 
-    /* No extra opacity here: not_now/shipped rows are already dimmed by the
-       parent .translucent wrapper (see Board::Roadmap::RoadmapCard#dimmed?).
-       Stacking opacity here would compound with it and drop the marker
-       below the 3:1 contrast a non-text status indicator needs. */
+    /* No opacity here: not_now rows are muted via the title's ink-dark token
+       instead (see Board::Roadmap::RoadmapCard#dimmed?), so the marker stays
+       full strength -- it's the one thing still carrying the "parked" cue,
+       and needs the full 3:1 contrast a non-text status indicator requires. */
     &.roadmap__marker--deferred {
       --roadmap-status-bg: var(--color-status-deferred-bg);
       --roadmap-status-color: var(--color-status-deferred);
@@ -177,7 +200,19 @@
     color: var(--color-ink-inverted);
     flex: none;
     font-weight: 700;
+    letter-spacing: var(--roadmap-tracking);
     padding: 0.15em 0.6em;
+  }
+
+  .roadmap__status-badge {
+    font-weight: 600;
+  }
+
+  /* Domain pills and the status badge share .btn--plain; scope the tracking
+     to roadmap usage rather than .btn--plain itself, which is used unmuted
+     elsewhere in the app. */
+  .roadmap .btn--plain {
+    letter-spacing: var(--roadmap-tracking);
   }
 
   .roadmap__phase-head {
@@ -203,6 +238,20 @@
   .roadmap__phase-done {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+  }
+
+  /* List view
+     ------------------------------------------------------------------------
+     A row of title + marker + badges needs more room than the 60ch reading
+     panel gives, so List mode widens the panel itself, without touching
+     .panel--wide, which other screens share. */
+  .roadmap--list {
+    --panel-size: min(100%, 80rem);
+  }
+
+  .roadmap__card-id {
+    font-variant-numeric: tabular-nums;
+    font-weight: 400;
   }
 
   /* Lanes view
@@ -246,6 +295,7 @@
   }
 
   .roadmap__lane-head {
+    letter-spacing: var(--roadmap-tracking);
     padding-inline: 0.25rem;
   }
 
@@ -272,10 +322,6 @@
     color: var(--color-ink);
     display: flex;
     padding: var(--block-space-half);
-
-    &.translucent {
-      opacity: 0.7;
-    }
 
     &:hover {
       border-color: var(--color-ink-light);
@@ -329,12 +375,8 @@
   }
 
   @media (max-width: 639px) {
-    .roadmap__hero {
+    .roadmap__hero-top {
       align-items: flex-start;
-    }
-
-    .roadmap__tiles {
-      margin-inline-start: 0;
     }
 
     .roadmap__card .roadmap__step-bar,
