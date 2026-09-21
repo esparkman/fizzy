@@ -231,6 +231,40 @@
     }
   }
 
+  /* An epic row prepends this same disclosure button before its marker, but
+     its marker/title still need to line up with a non-epic sibling row's,
+     which has no button in front of it. Pulling the button back by its own
+     square footprint (--btn-size; see .btn:has(.icon):has(.for-screen-reader)
+     in buttons.css) plus the row's own gap takes it out of flow entirely, so
+     the marker lands at the same x either way -- but the default --btn-size
+     (2.65em, a generous circular tap target) doesn't fit in the panel's own
+     gutter at narrow widths without the button spilling past the viewport
+     edge. Shrink it here, same as other compact icon buttons around the app
+     (e.g. .reaction), so it always fits. */
+  .roadmap__card--epic .roadmap__disclosure {
+    --btn-size: 1.1em;
+
+    margin-inline-start: calc(-1 * (var(--btn-size) + var(--inline-space)));
+    position: relative;
+
+    /* --btn-size above is shrunk to fit the alignment math, but that makes
+       the button's own box (~17-21px) smaller than WCAG 2.5.8's 24px
+       minimum hit area -- and on the mobile layout this fixes, it's the
+       only way to collapse/expand an epic (the row's other content is a
+       link to the card). Grow the hit area with a centered ::before rather
+       than the button's own box, so the visual chevron and the negative
+       margin above (both keyed to --btn-size) are unaffected. */
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-start: 50%;
+      block-size: max(24px, 100%);
+      inline-size: max(24px, 100%);
+      translate: -50% -50%;
+    }
+  }
+
   .roadmap__phase-done {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
