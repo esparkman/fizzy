@@ -260,11 +260,19 @@ class Boards::RoadmapsTest < ApplicationSystemTestCase
 
     card_row = "##{dom_id(card, :roadmap)}"
     assert_selector card_row, text: "Ship the thing"
-    assert_no_selector card_row, text: /shipped/i
+    assert_no_selector "#{card_row} .roadmap__marker--shipped"
 
     close_card_elsewhere(card)
 
-    assert_selector card_row, text: /shipped/i, wait: 5
+    # A page-refresh broadcast morphs the whole roadmap in place, and a
+    # closed card's shipped status sorts it earlier in the phase -- so the
+    # row itself can move. Asserting the shipped marker inside the id-scoped
+    # row (rather than a "shipped" text regex over the row broadly) confirms
+    # the settled post-broadcast state without caring where the row landed.
+    within card_row do
+      assert_selector ".roadmap__marker--shipped", wait: 5
+      assert_selector ".roadmap__marker .for-screen-reader", text: "Shipped", visible: :all
+    end
   end
 
   private
